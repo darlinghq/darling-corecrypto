@@ -248,7 +248,6 @@ static void md4_final(const struct ccdigest_info* di, ccdigest_ctx_t ctx, unsign
 {
 	struct MD4_CTX* mdctx = (struct MD4_CTX*) ccdigest_u8(ccdigest_state(di, ctx));
 	struct ccdigest_state* state = ccdigest_state(di, ctx);
-	ccdigest_u8(state);
 
 	// Push the remaining data
 	MD4Update(mdctx, ccdigest_data(di, ctx), ccdigest_num(di, ctx));

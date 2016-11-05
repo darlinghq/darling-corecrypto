@@ -22,6 +22,7 @@ set(cc_sources
 	src/ccdigest.c
 	src/ccmd2.c
 	src/ccmd4.c
+	src/ccmd5.c
 )
 
 SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/darling")
