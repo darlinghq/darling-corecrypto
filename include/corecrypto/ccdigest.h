@@ -3,7 +3,7 @@
  *
  * This file is part of Darling CoreCrypto.
  *
- * Neo4j is free software: you can redistribute it and/or modify
+ * Darling is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
@@ -106,7 +106,7 @@ int ccdigest_test_chunk_vector(const struct ccdigest_info* di, const struct ccdi
 #define ccdigest_di_decl(di, name)  cc_ctx_decl(struct ccdigest_ctx, ccdigest_di_size(di), name)
 #define ccdigest_di_clear(di, name) cc_clear(ccdigest_di_size(di), name)
 
-#define ccdigest_state(di, ctx)	((struct ccdigest_state*)(ctx.hdr + 1))
+#define ccdigest_state(di, ctx)	((struct ccdigest_state*)((ctx).hdr + 1))
 #define ccdigest_state_u8(di, ctx)   ccdigest_u8(ccdigest_state((di), (ctx)))
 #define ccdigest_state_u32(di, ctx)  ccdigest_u32(ccdigest_state((di), (ctx)))
 #define ccdigest_state_u64(di, ctx)  ccdigest_u64(ccdigest_state((di), (ctx)))
@@ -116,10 +116,10 @@ int ccdigest_test_chunk_vector(const struct ccdigest_info* di, const struct ccdi
 #define ccdigest_data(di, ctx)		 (&((ccdigest_ctx_t)(ctx)).hdr->state.u8 + (di)->state_size + sizeof(uint64_t))
 #define ccdigest_num(di, ctx)		 (*((unsigned int *)(&((ccdigest_ctx_t)(ctx)).hdr->state.u8 + (di)->state_size + sizeof(uint64_t) + (di)->block_size)))
 
-#define ccdigest_u8(state)			   (&((ccdigest_state_t)(state)).hdr->state.u8)
-#define ccdigest_u32(state)			   (&((ccdigest_state_t)(state)).hdr->state.u32)
-#define ccdigest_u64(state)			   (&((ccdigest_state_t)(state)).hdr->state.u64)
-#define ccdigest_ccn(state)			   (&((ccdigest_state_t)(state)).hdr->state.ccn)
+static inline uint8_t* ccdigest_u8(ccdigest_state_t state) { return &state.hdr->state.u8; }
+static inline uint32_t* ccdigest_u32(ccdigest_state_t state) { return &state.hdr->state.u32; }
+static inline uint64_t* ccdigest_u64(ccdigest_state_t state) { return &state.hdr->state.u64; }
+static inline cc_unit* ccdigest_ccn(ccdigest_state_t state) { return &state.hdr->state.ccn; }
 #define ccdigest_final(di, ctx, digest) (di)->final(di, ctx, digest)
 
 #define ccdigest_copy_state(di, dst, src) memcpy(dst, src, (di)->state_size)
