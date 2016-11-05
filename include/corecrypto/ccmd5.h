@@ -24,7 +24,7 @@
 
 #define CCMD5_BLOCK_SIZE   64
 #define CCMD5_OUTPUT_SIZE  16
-#define CCMD5_STATE_SIZE   16
+#define CCMD5_STATE_SIZE   88
 
 extern const uint32_t ccmd5_initial_state[4];
 

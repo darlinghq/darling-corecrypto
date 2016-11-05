@@ -24,7 +24,7 @@
 
 #define CCMD4_BLOCK_SIZE   64
 #define CCMD4_OUTPUT_SIZE  16
-#define CCMD4_STATE_SIZE   16
+#define CCMD4_STATE_SIZE   88
 
 extern const uint32_t ccmd4_initial_state[4];
 
