@@ -20,13 +20,14 @@ add_definitions(-D_FILE_OFFSET_BITS=64)
 set(cc_sources
 	src/cc.c
 	src/ccdigest.c
+	src/cchmac.c
 	src/ccmd2.c
 	src/ccmd4.c
 	src/ccmd5.c
 )
 
 SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/darling")
-SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE) 
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 add_library(corecrypto SHARED ${cc_sources})
