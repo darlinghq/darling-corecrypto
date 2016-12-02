@@ -1,49 +1,87 @@
 /*
- * Copyright (c) 2016 Lubos Dolezel
+ *  ccsha2.h
+ *  corecrypto
  *
- * This file is part of Darling CoreCrypto.
+ *  Created on 12/03/2010
  *
- * Darling is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *  Copyright (c) 2010,2011,2012,2014,2015 Apple Inc. All rights reserved.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _CORECRYPTO_CCSHA2_H
-#define _CORECRYPTO_CCSHA2_H
+#ifndef _CORECRYPTO_CCSHA2_H_
+#define _CORECRYPTO_CCSHA2_H_
 
 #include <corecrypto/ccdigest.h>
 
+/* sha2 selectors */
 const struct ccdigest_info *ccsha224_di(void);
 const struct ccdigest_info *ccsha256_di(void);
 const struct ccdigest_info *ccsha384_di(void);
 const struct ccdigest_info *ccsha512_di(void);
 
+/* TODO: Placeholders */
+#define ccoid_sha224 ((unsigned char *)"\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x04")
+#define ccoid_sha224_len 11
+
+#define ccoid_sha256 ((unsigned char *)"\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x01")
+#define ccoid_sha256_len 11
+
+#define ccoid_sha384 ((unsigned char *)"\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x02")
+#define ccoid_sha384_len 11
+
+#define ccoid_sha512 ((unsigned char *)"\x06\x09\x60\x86\x48\x01\x65\x03\x04\x02\x03")
+#define ccoid_sha512_len 11
+
+
+/* SHA256 */
 #define CCSHA256_BLOCK_SIZE  64
 #define	CCSHA256_OUTPUT_SIZE 32
 #define	CCSHA256_STATE_SIZE  32
-
 extern const struct ccdigest_info ccsha256_ltc_di;
+extern const struct ccdigest_info ccsha256_v6m_di;
+#if  CCSHA2_VNG_INTEL
+#if defined __x86_64__
+extern const struct ccdigest_info ccsha224_vng_intel_AVX2_di;
+extern const struct ccdigest_info ccsha224_vng_intel_AVX1_di;
+extern const struct ccdigest_info ccsha256_vng_intel_AVX2_di;
+extern const struct ccdigest_info ccsha256_vng_intel_AVX1_di;
+extern const struct ccdigest_info ccsha384_vng_intel_AVX2_di;
+extern const struct ccdigest_info ccsha384_vng_intel_AVX1_di;
+extern const struct ccdigest_info ccsha384_vng_intel_SupplementalSSE3_di;
+extern const struct ccdigest_info ccsha512_vng_intel_AVX2_di;
+extern const struct ccdigest_info ccsha512_vng_intel_AVX1_di;
+extern const struct ccdigest_info ccsha512_vng_intel_SupplementalSSE3_di;
+#endif
+extern const struct ccdigest_info ccsha256_vng_intel_SupplementalSSE3_di;
+#endif
+#if  CCSHA2_VNG_ARMV7NEON
+extern const struct ccdigest_info ccsha256_vng_armv7neon_di;
+extern const struct ccdigest_info ccsha384_vng_arm64_di;
+extern const struct ccdigest_info ccsha384_vng_armv7neon_di;
+extern const struct ccdigest_info ccsha512_vng_arm64_di;
+extern const struct ccdigest_info ccsha512_vng_armv7neon_di;
+#endif
 extern const uint32_t ccsha256_K[64];
+extern const uint64_t ccsha512_K[80];
 
+/* SHA224 */
 #define	CCSHA224_OUTPUT_SIZE 28
 extern const struct ccdigest_info ccsha224_ltc_di;
+#if  CCSHA2_VNG_INTEL
+extern const struct ccdigest_info ccsha224_vng_intel_SupplementalSSE3_di;
+#endif
+#if  CCSHA2_VNG_ARMV7NEON
+extern const struct ccdigest_info ccsha224_vng_armv7neon_di;
+#endif
 
+/* SHA512 */
 #define CCSHA512_BLOCK_SIZE  128
 #define	CCSHA512_OUTPUT_SIZE  64
 #define	CCSHA512_STATE_SIZE   64
 extern const struct ccdigest_info ccsha512_ltc_di;
 
+/* SHA384 */
 #define	CCSHA384_OUTPUT_SIZE  48
 extern const struct ccdigest_info ccsha384_ltc_di;
 
-#endif
-
+#endif /* _CORECRYPTO_CCSHA2_H_ */
