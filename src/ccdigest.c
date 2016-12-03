@@ -20,7 +20,7 @@
 #include <corecrypto/ccdigest.h>
 #include <string.h>
 
-void ccdigest(const struct ccdigest_info* di, unsigned long len, const void* data, void* digest)
+void ccdigest(const struct ccdigest_info* di, size_t len, const void* data, void* digest)
 {
 	ccdigest_di_decl(di, context);
 
@@ -44,7 +44,7 @@ static inline void ccdigest_submit_block(const struct ccdigest_info* di, ccdiges
 	ccdigest_nbits(di, ctx) += nblocks * di->block_size * 8;
 }
 
-void ccdigest_update(const struct ccdigest_info* di, ccdigest_ctx_t ctx, unsigned long len, const void* data)
+void ccdigest_update(const struct ccdigest_info* di, ccdigest_ctx_t ctx, size_t len, const void* data)
 {
 	const uint8_t* ptr = (const uint8_t*) data;
 
@@ -93,12 +93,12 @@ void ccdigest_update(const struct ccdigest_info* di, ccdigest_ctx_t ctx, unsigne
 }
 
 
-int ccdigest_test(const struct ccdigest_info* di, unsigned long len, const void* data, const void* digest)
+int ccdigest_test(const struct ccdigest_info* di, size_t len, const void* data, const void* digest)
 {
 	return ccdigest_test_chunk(di, len, data, digest, len);
 }
 
-int ccdigest_test_chunk(const struct ccdigest_info* di, unsigned long len, const void* data, const void *digest, unsigned long chunk)
+int ccdigest_test_chunk(const struct ccdigest_info* di, size_t len, const void* data, const void *digest, size_t chunk)
 {
 	const uint8_t* ptr = (const uint8_t*) data;
 	unsigned long done;
@@ -124,7 +124,7 @@ int ccdigest_test_vector(const struct ccdigest_info* di, const struct ccdigest_v
 	return ccdigest_test(di, v->len, v->message, v->digest);
 }
 
-int ccdigest_test_chunk_vector(const struct ccdigest_info* di, const struct ccdigest_vector* v, unsigned long chunk)
+int ccdigest_test_chunk_vector(const struct ccdigest_info* di, const struct ccdigest_vector* v, size_t chunk)
 {
 	return ccdigest_test_chunk(di, v->len, v->message, v->digest, chunk);
 }
