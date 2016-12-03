@@ -22,7 +22,7 @@
 #include <string.h>
 
 static void md4_final(const struct ccdigest_info* di, ccdigest_ctx_t ctx, unsigned char* out);
-static void md4_compress(ccdigest_state_t state, unsigned long nblocks, const void* in);
+static void md4_compress(ccdigest_state_t state, size_t nblocks, const void* in);
 
 static const uint32_t md4_initial_state[4+18] = { 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476 };
 
@@ -254,7 +254,7 @@ static void md4_final(const struct ccdigest_info* di, ccdigest_ctx_t ctx, unsign
 	MD4Final(out, mdctx);
 }
 
-static void md4_compress(ccdigest_state_t state, unsigned long nblocks, const void* in)
+static void md4_compress(ccdigest_state_t state, size_t nblocks, const void* in)
 {
 	struct MD4_CTX* ctx = (struct MD4_CTX*) ccdigest_u8(state);
 	unsigned int i;

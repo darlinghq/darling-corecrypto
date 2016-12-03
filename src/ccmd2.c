@@ -24,7 +24,7 @@
 const static uint8_t md2_initial_state[CCMD2_STATE_SIZE]; // all zeroes
 
 static void md2_final(const struct ccdigest_info* di, ccdigest_ctx_t ctx, unsigned char* out);
-static void md2_compress(ccdigest_state_t state, unsigned long nblocks, const void* in);
+static void md2_compress(ccdigest_state_t state, size_t nblocks, const void* in);
 
 const struct ccdigest_info ccmd2_ltc_di = {
 	.initial_state = md2_initial_state,
@@ -197,7 +197,7 @@ static void md2_final(const struct ccdigest_info* di, ccdigest_ctx_t ctx, unsign
 	MD2Final(out, mdctx);
 }
 
-static void md2_compress(ccdigest_state_t state, unsigned long nblocks, const void* in)
+static void md2_compress(ccdigest_state_t state, size_t nblocks, const void* in)
 {
 	struct MD2_CTX* ctx = (struct MD2_CTX*) ccdigest_u8(state);
 	unsigned int i;

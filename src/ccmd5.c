@@ -22,7 +22,7 @@
 #include <string.h>
 
 static void md5_final(const struct ccdigest_info* di, ccdigest_ctx_t ctx, unsigned char* out);
-static void md5_compress(ccdigest_state_t state, unsigned long nblocks, const void* in);
+static void md5_compress(ccdigest_state_t state, size_t nblocks, const void* in);
 
 static const uint32_t md5_initial_state[4+18] = { 0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476 };
 
@@ -288,7 +288,7 @@ static void md5_final(const struct ccdigest_info* di, ccdigest_ctx_t ctx, unsign
 	MD5Final(out, mdctx);
 }
 
-static void md5_compress(ccdigest_state_t state, unsigned long nblocks, const void* in)
+static void md5_compress(ccdigest_state_t state, size_t nblocks, const void* in)
 {
 	struct MD5_CTX* ctx = (struct MD5_CTX*) ccdigest_u8(state);
 	unsigned int i;
