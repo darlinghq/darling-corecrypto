@@ -21,6 +21,8 @@
 #include <corecrypto/ccmd4.h>
 #include <string.h>
 
+#define ROTATE_LEFT(x, n) (((x) << (n)) | ((x) >> (32-(n))))
+
 static void md4_final(const struct ccdigest_info* di, ccdigest_ctx_t ctx, unsigned char* out);
 static void md4_compress(ccdigest_state_t state, size_t nblocks, const void* in);
 

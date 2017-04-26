@@ -54,53 +54,34 @@ typedef union {
 
 typedef void(ccmod_prime_f)(cczp_const_t, cc_unit *, const cc_unit *, cc_ws_t);
 
+#define CCZP_PRIME(ZP) (((cczp_short_t)(ZP)).prime->ccn)
+
+// Macros
+#define CCZP_RECIP(ZP) (((cczp_t)(ZP)).prime->ccn + cczp_n(ZP))
+#define cczp_size(_size_) (sizeof(struct cczp) + ccn_sizeof_n(1) + 2 * (_size_))
+#define CCZP_N(ZP) (((cczp_short_t)(ZP)).zp->n)
+
+// Functions
+
+CC_CONST CC_NONNULL_TU((1))
+CC_INLINE cc_size cczp_n(cczp_const_short_t zp) {
+    return zp.zp->n;
+}
+
+CC_CONST CC_NONNULL_TU((1))
+CC_INLINE const cc_unit *cczp_recip(cczp_const_t zp) {
+    return zp.u + cczp_n(zp) + ccn_nof_size(sizeof(struct cczp));
+}
+
+CC_CONST CC_NONNULL_TU((1))
+CC_INLINE const cc_unit *cczp_prime(cczp_const_short_t zp) {
+    return zp.u + ccn_nof_size(sizeof(struct cczp));
+}
+
+CC_NONNULL_TU((1))
 void cczp_init(cczp_t zp);
 
+CC_NONNULL_TU((1)) CC_NONNULL((2, 3))
 void cczp_mod(cczp_const_t zp, cc_unit *r, const cc_unit *s2n, cc_ws_t ws);
 
-void cczp_modn(cczp_const_t zp, cc_unit *r, cc_size ns, const cc_unit *s);
-
-void cczp_mul(cczp_const_t zp, cc_unit *t, const cc_unit *x, const cc_unit *y);
-
-void cczp_mul_ws(cczp_const_t zp, cc_unit *t, const cc_unit *x, const cc_unit *y, cc_ws_t ws);
-
-void cczp_sqr(cczp_const_t zp, cc_unit *r, const cc_unit *x);
-
-void cczp_sqr_ws(cczp_const_t zp, cc_unit *r, const cc_unit *x, cc_ws_t ws);
-
-int cczp_sqrt(cczp_const_t zp, cc_unit *r, const cc_unit *x);
-
-void cczp_power(cczp_const_t zp, cc_unit *r, const cc_unit *m,
-                const cc_unit *e);
-
-void cczp_powern(cczp_const_t zp, cc_unit *r, const cc_unit *s,
-                 size_t ebitlen, const cc_unit *e);
-
-void cczp_add(cczp_const_short_t zp, cc_unit *r, const cc_unit *x,
-              const cc_unit *y);
-
-void cczp_add_ws(cczp_const_short_t zp, cc_unit *r, const cc_unit *x,
-                 const cc_unit *y, cc_ws_t ws);
-
-void cczp_sub(cczp_const_short_t zp, cc_unit *r, const cc_unit *x, const cc_unit *y);
-
-void cczp_sub_ws(cczp_const_short_t zp, cc_unit *r, const cc_unit *x,
-                 const cc_unit *y, cc_ws_t ws);
-
-void cczp_div2(cczp_const_short_t zp, cc_unit *r, const cc_unit *x);
-
-void cczp_div(cczp_const_t zd, cc_unit *q, cc_unit *r, const cc_unit *a_2n);
-
-int cczp_mod_inv(cczp_const_short_t zp, cc_unit *r, const cc_unit *x);
-
-int cczp_mod_inv_field(cczp_const_t zp, cc_unit *r, const cc_unit *x);
-
-void cczp_mod_inv_slow(cczp_const_t zp, cc_unit *r, const cc_unit *x);
-
-void cczp_mod_inv_slown(cczp_const_t zp, cc_unit *r, const cc_size nx, const cc_unit *x);
-
-int cczp_rabin_miller(cczp_t zp, unsigned long mr_depth);
-
-int cczp_random_prime(cc_size nbits, cczp_t zp, const cc_unit *e,
-                       struct ccrng_state *rng);
 #endif

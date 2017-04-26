@@ -104,6 +104,10 @@ Rotation is separate from addition to prevent recomputation.
 #define H(x, y, z) ((x) ^ (y) ^ (z))
 #define I(x, y, z) ((y) ^ ((x) | (~z)))
 
+// TODO: Were these previously undefined macros supposed to do something different?
+#define MD5_memcpy memcpy
+#define MD5_memset memset
+
 static void Decode (UINT4 *output, unsigned char *input, unsigned int len)
 {
 	unsigned int i, j;
