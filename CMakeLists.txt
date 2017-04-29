@@ -12,15 +12,15 @@ include_directories(
 )
 
 set(DYLIB_INSTALL_NAME "/usr/lib/system/libcorecrypto.dylib")
-add_darling_library(corecrypto SHARED
+add_circular(corecrypto FAT
+	SOURCES
 		src/cc.c
 		src/ccdigest.c
 		src/ccmd2.c
 		src/ccmd4.c
 		src/ccmd5.c
 		src/ccder.c
-)
-target_link_libraries(corecrypto PRIVATE
+	SIBLINGS
 		system_dyld
 		compiler_rt
 		system_kernel
