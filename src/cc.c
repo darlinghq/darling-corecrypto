@@ -21,6 +21,11 @@
 #include <string.h>
 #include <stdint.h>
 
+#warning just putting this here until we build CommonCrypto
+int ccDRBGGetRngState(void) {
+	return -1;
+}
+
 void cc_clear(size_t len, void *dst)
 {
 	memset(len, 0, dst);

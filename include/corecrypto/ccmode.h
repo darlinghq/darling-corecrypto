@@ -90,12 +90,22 @@ CC_INLINE size_t cccbc_block_size(const struct ccmode_cbc *mode)
 	return mode->block_size;
 }
 
+#ifndef CCCBC_RETURN_INT
 CC_INLINE void cccbc_init(const struct ccmode_cbc *mode, cccbc_ctx *ctx,
                           size_t key_len, const void *key)
 {
     mode->init(mode, ctx, key_len, key);
 }
+#else
+CC_INLINE int cccbc_init(const struct ccmode_cbc *mode, cccbc_ctx *ctx,
+                          size_t key_len, const void *key)
+{
+    mode->init(mode, ctx, key_len, key);
+    return 0;
+}
+#endif
 
+#ifndef CCCBC_RETURN_INT
 CC_INLINE void cccbc_set_iv(const struct ccmode_cbc *mode, cccbc_iv *iv_ctx,
                             const void *iv)
 {
@@ -104,13 +114,35 @@ CC_INLINE void cccbc_set_iv(const struct ccmode_cbc *mode, cccbc_iv *iv_ctx,
     else
         cc_zero(mode->block_size, iv_ctx);
 }
+#else
+CC_INLINE int cccbc_set_iv(const struct ccmode_cbc *mode, cccbc_iv *iv_ctx,
+                            const void *iv)
+{
+    if (iv)
+        cc_copy(mode->block_size, iv_ctx, iv);
+    else
+        cc_zero(mode->block_size, iv_ctx);
 
+    return 0;
+}
+#endif
+
+#ifndef CCCBC_RETURN_INT
 CC_INLINE void cccbc_update(const struct ccmode_cbc *mode,  cccbc_ctx *ctx,
                             cccbc_iv *iv, size_t nblocks,
                             const void *in, void *out)
 {
 	mode->cbc(ctx, iv, nblocks, in, out);
 }
+#else
+CC_INLINE int cccbc_update(const struct ccmode_cbc *mode,  cccbc_ctx *ctx,
+                            cccbc_iv *iv, size_t nblocks,
+                            const void *in, void *out)
+{
+	mode->cbc(ctx, iv, nblocks, in, out);
+	return 0;
+}
+#endif
 
 CC_INLINE void cccbc_one_shot(const struct ccmode_cbc *mode,
                               size_t key_len, const void *key,
@@ -557,5 +589,10 @@ CC_INLINE int ccomac_one_shot(const struct ccmode_omac *mode,
     return result;
 }
 
+int ccgcm_init_with_iv(const struct ccmode_gcm *mode, ccgcm_ctx *ctx,
+                       size_t key_nbytes, const void *key,
+                       const void *iv);
+
+int ccgcm_inc_iv(const struct ccmode_gcm *mode, ccgcm_ctx *ctx, void *iv);
 
 #endif /* _CORECRYPTO_CCMODE_H_ */

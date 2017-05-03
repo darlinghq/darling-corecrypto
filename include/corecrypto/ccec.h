@@ -119,6 +119,7 @@ size_t ccec_rfc6637_wrap_key_size(ccec_pub_ctx_t public_key,
 #define CCEC_RFC6637_COMPACT_KEYS   1
 #define CCEC_RFC6637_DEBUG_KEYS     2
 
+#ifndef HIDE_COMPLAINT
 CC_NONNULL_TU((1)) CC_NONNULL((2, 6, 7, 8, 9, 10))
 int ccec_rfc6637_wrap_key(ccec_pub_ctx_t public_key,
                           void  *wrapped_key,
@@ -142,6 +143,7 @@ int ccec_rfc6637_unwrap_key(ccec_full_ctx_t private_key,
                             const uint8_t *fingerprint,
                             size_t wrapped_key_len,
                             const void  *wrapped_key);
+#endif
 
 CC_CONST ccec_const_cp_t ccec_cp_192();
 CC_CONST ccec_const_cp_t ccec_cp_224();
@@ -237,5 +239,15 @@ int ccec_compact_import_pub(ccec_const_cp_t cp, size_t in_len, const uint8_t *in
 CC_NONNULL_TU((1,2)) CC_NONNULL((3, 4))
 int ccec_compute_key(ccec_full_ctx_t private_key, ccec_pub_ctx_t public_key,
                      size_t *computed_key_len, uint8_t *computed_key);
+
+CC_NONNULL_TU((1,3)) CC_NONNULL2
+int ccec_generate_key(ccec_const_cp_t cp, struct ccrng_state *rng,
+                      ccec_full_ctx_t key);
+
+CC_NONNULL_TU((1,2)) CC_NONNULL((3, 4))
+int ccecdh_compute_shared_secret(ccec_full_ctx_t private_key,
+                                 ccec_pub_ctx_t public_key,
+                                 size_t *computed_shared_secret_len, uint8_t *computed_shared_secret,
+                                 struct ccrng_state *masking_rng);
 
 #endif

@@ -90,7 +90,19 @@ size_t ccdh_ccn_size(ccdh_const_gp_t gp) {
     return ccn_sizeof_n(cczp_n(gp.zp));
 }
 
+CC_NONNULL_TU((1)) CC_NONNULL2
+void ccdh_export_pub(ccdh_pub_ctx_t key, void *out);
+
+#define ccdh_gp_prime_size(GP)  (ccdh_ccn_size(GP))
+#define ccdh_ctx_gp(KEY)     (((ccdh_pub_ctx_t)(KEY)).hdr->gp)
+CC_INLINE CC_CONST CC_NONNULL_TU((1))
+size_t ccdh_export_pub_size(ccdh_pub_ctx_t key) {
+    return ccdh_gp_prime_size(ccdh_ctx_gp(key));
+}
+
+
 // Macros
+
 #define ccdh_pub_ctx_decl(_size_, _name_)   cc_ctx_decl(ccdh_pub_ctx, ccdh_pub_ctx_size(_size_), _name_)
 
 #define ccdh_pub_ctx_decl_gp(_gp_, _name_)  ccdh_pub_ctx_decl(ccdh_ccn_size(_gp_), _name_)
@@ -112,5 +124,23 @@ size_t ccdh_ccn_size(ccdh_const_gp_t gp) {
 #define CCDH_GP_L(_gp_)         (*(cc_size *)((cc_unit *)(CCDH_GP_Q(_gp_) + ccdh_gp_n(_gp_))))
 
 #define ccdh_pub_ctx_size(_size_)   (sizeof(struct ccdh_ctx_header) + 1 * (_size_))
+
+#define ccdh_gp_prime_bitlen(GP)  (ccn_bitlen(ccdh_gp_n(GP), ccdh_gp_prime(GP)))
+
+CC_CONST CC_INLINE CC_NONNULL_TU((1))
+const cc_unit *ccdh_gp_g(ccdh_const_gp_t gp) {
+    return CCDH_GP_G(gp._ncgp);
+}
+
+CC_CONST CC_INLINE CC_NONNULL_TU((1))
+const cc_unit *ccdh_gp_prime(ccdh_const_gp_t gp) {
+    return cczp_prime(gp.zp);
+}
+
+CC_NONNULL((1))
+cc_size ccder_decode_dhparam_n(const uint8_t *der, const uint8_t *der_end);
+
+CC_NONNULL_TU((1)) CC_NONNULL((2))
+const uint8_t *ccder_decode_dhparams(ccdh_gp_t gp, const uint8_t *der, const uint8_t *der_end);
 
 #endif

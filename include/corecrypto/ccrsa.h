@@ -86,4 +86,14 @@ cc_size ccder_decode_rsa_priv_n(const uint8_t *der, const uint8_t *der_end);
 CC_NONNULL_TU((1)) CC_NONNULL((2)) CC_NONNULL((3))
 const uint8_t *ccder_decode_rsa_priv(const ccrsa_full_ctx_t key, const uint8_t *der, const uint8_t *der_end);
 
+CC_NONNULL_TU((1)) CC_NONNULL((2, 4, 6, 7))
+int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t *oid,
+                          size_t digest_len, const uint8_t *digest,
+                          size_t sig_len, const uint8_t *sig,
+                          bool *valid);
+
+CC_NONNULL_TU((1)) CC_NONNULL((2, 3))
+void ccrsa_init_pub(ccrsa_pub_ctx_t key, const cc_unit *modulus,
+                    const cc_unit *e);
+
 #endif
