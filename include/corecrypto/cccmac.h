@@ -74,7 +74,7 @@ typedef struct cccmac_ctx* cccmac_ctx_t;
 #define cccmac_k1(HC)       (CCCMAC_HDR(HC)->k1)
 #define cccmac_k2(HC)       (CCCMAC_HDR(HC)->k2)
 
-void cccmac_init(const struct ccmode_cbc *cbc, cccmac_ctx_t ctx, const void *key);
+int cccmac_init(const struct ccmode_cbc *cbc, cccmac_ctx_t ctx, int key_length, const void *key);
 
 
 void cccmac_block_update(const struct ccmode_cbc *cbc, cccmac_ctx_t cmac,
@@ -88,5 +88,18 @@ void cccmac(const struct ccmode_cbc *cbc, const void *key,
             size_t data_len, const void *data,
             void *mac);
 
+void cccmac_one_shot_generate(const struct ccmode_cbc *,
+	int key_size,
+	const void *key,
+	size_t dataLength,
+	const uint8_t *data,
+	int block_size,
+	void *macOut);
+
+void cccmac_update(cccmac_ctx_t ctx, size_t dataLength, const void *data);
+
+void cccmac_final_generate(cccmac_ctx_t ctx, size_t dataLength, void *macOut);
+
+const struct ccmode_cbc* cccmac_cbc(cccmac_ctx_t ctx);
 
 #endif /* _CORECRYPTO_cccmac_H_ */

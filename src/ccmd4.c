@@ -268,3 +268,10 @@ static void md4_compress(ccdigest_state_t state, size_t nblocks, const void* in)
 		pos += CCMD4_BLOCK_SIZE;
 	}
 }
+
+const uint32_t ccmd4_initial_state[4] = {
+    0x00000000,
+    0x00000000,
+    0x00000000,
+    0x00000000,
+};

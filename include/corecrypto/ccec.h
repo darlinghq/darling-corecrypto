@@ -119,6 +119,10 @@ size_t ccec_rfc6637_wrap_key_size(ccec_pub_ctx_t public_key,
 #define CCEC_RFC6637_COMPACT_KEYS   1
 #define CCEC_RFC6637_DEBUG_KEYS     2
 
+struct ccec_rfc6637_curve;
+struct ccec_rfc6637_wrap;
+struct ccec_rfc6637_unwrap;
+
 #ifndef HIDE_COMPLAINT
 CC_NONNULL_TU((1)) CC_NONNULL((2, 6, 7, 8, 9, 10))
 int ccec_rfc6637_wrap_key(ccec_pub_ctx_t public_key,
@@ -150,9 +154,7 @@ CC_CONST ccec_const_cp_t ccec_cp_224();
 CC_CONST ccec_const_cp_t ccec_cp_256();
 CC_CONST ccec_const_cp_t ccec_cp_384();
 
-struct ccec_rfc6637_curve;
-struct ccec_rfc6637_wrap;
-struct ccec_rfc6637_unwrap;
+
 
 extern struct ccec_rfc6637_wrap ccec_rfc6637_wrap_sha256_kek_aes128;
 extern struct ccec_rfc6637_wrap ccec_rfc6637_wrap_sha512_kek_aes256;
@@ -249,5 +251,35 @@ int ccecdh_compute_shared_secret(ccec_full_ctx_t private_key,
                                  ccec_pub_ctx_t public_key,
                                  size_t *computed_shared_secret_len, uint8_t *computed_shared_secret,
                                  struct ccrng_state *masking_rng);
+
+CC_NONNULL_TU((1))
+int ccec_get_pubkey_components(ccec_pub_ctx_t key, size_t *nbits,
+                           uint8_t *x, size_t *xsize,
+                           uint8_t *y, size_t *ysize);
+
+CC_NONNULL_TU((1))
+int ccec_get_fullkey_components(ccec_full_ctx_t key, size_t *nbits,
+                            uint8_t *x, size_t *xsize,
+                            uint8_t *y, size_t *ysize,
+                            uint8_t *d, size_t *dsize);
+
+CC_NONNULL_TU((6))
+int ccec_make_pub(size_t nbits,
+                  size_t xlength, uint8_t *x,
+                  size_t ylength, uint8_t *y,
+                  ccec_pub_ctx_t key);
+
+CC_NONNULL_TU((8))
+int ccec_make_priv(size_t nbits,
+                   size_t xlength, uint8_t *x,
+                   size_t ylength, uint8_t *y,
+                   size_t klength, uint8_t *k,
+                   ccec_full_ctx_t key);
+
+CC_NONNULL_TU((1,4)) CC_NONNULL3
+int ccec_x963_import_priv(ccec_const_cp_t cp, size_t in_len, const uint8_t *in, ccec_full_ctx_t key);
+
+CC_NONNULL_TU((1,4)) CC_NONNULL3
+int ccec_x963_import_pub(ccec_const_cp_t cp, size_t in_len, const uint8_t *in, ccec_pub_ctx_t key);
 
 #endif

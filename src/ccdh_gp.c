@@ -42,3 +42,5 @@ ccdh_const_gp_t ccsrp_gp_rfc5054_4096() {
 ccdh_const_gp_t ccsrp_gp_rfc5054_8192() {
 }
 
+ccdh_const_gp_t ccdh_gp_rfc2409group02() {
+}

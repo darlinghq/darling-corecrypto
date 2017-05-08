@@ -153,3 +153,38 @@ int ccecdh_compute_shared_secret(ccec_full_ctx_t private_key,
                                  struct ccrng_state *masking_rng) {
 }
 
+CC_NONNULL_TU((1))
+int ccec_get_pubkey_components(ccec_pub_ctx_t key, size_t *nbits,
+                           uint8_t *x, size_t *xsize,
+                           uint8_t *y, size_t *ysize) {
+}
+
+CC_NONNULL_TU((1))
+int ccec_get_fullkey_components(ccec_full_ctx_t key, size_t *nbits,
+                            uint8_t *x, size_t *xsize,
+                            uint8_t *y, size_t *ysize,
+                            uint8_t *d, size_t *dsize) {
+}
+
+CC_NONNULL_TU((6))
+int ccec_make_pub(size_t nbits,
+                  size_t xlength, uint8_t *x,
+                  size_t ylength, uint8_t *y,
+                  ccec_pub_ctx_t key) {
+}
+
+CC_NONNULL_TU((8))
+int ccec_make_priv(size_t nbits,
+                   size_t xlength, uint8_t *x,
+                   size_t ylength, uint8_t *y,
+                   size_t klength, uint8_t *k,
+                   ccec_full_ctx_t key) {
+}
+
+CC_NONNULL_TU((1,4)) CC_NONNULL3
+int ccec_x963_import_priv(ccec_const_cp_t cp, size_t in_len, const uint8_t *in, ccec_full_ctx_t key) {
+}
+
+CC_NONNULL_TU((1,4)) CC_NONNULL3
+int ccec_x963_import_pub(ccec_const_cp_t cp, size_t in_len, const uint8_t *in, ccec_pub_ctx_t key) {
+}

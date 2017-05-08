@@ -26,3 +26,6 @@ CC_NONNULL_TU((1)) CC_NONNULL2
 void ccdh_export_pub(ccdh_pub_ctx_t key, void *out) {
 }
 
+CC_NONNULL_TU((1)) CC_NONNULL((3, 4))
+int ccdh_init_gp(ccdh_gp_t gp, cc_size n, cc_unit *p, cc_unit *g, cc_size l) {
+}

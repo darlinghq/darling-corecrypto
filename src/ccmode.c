@@ -24,3 +24,6 @@ int ccgcm_init_with_iv(const struct ccmode_gcm *mode, ccgcm_ctx *ctx,
 
 int ccgcm_inc_iv(const struct ccmode_gcm *mode, ccgcm_ctx *ctx, void *iv) {
 }
+
+int ccgcm_set_iv_legacy(const struct ccmode_gcm *arg0, ccgcm_ctx *arg1, int c, const void *data) {
+}
