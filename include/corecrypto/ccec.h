@@ -102,6 +102,11 @@ size_t ccec_x963_export_size(const int fullkey, ccec_full_ctx_t key){
     return (((ccec_ctx_bitlen(key)+7)/8) * ((fullkey == 1) + 2)) + 1;
 }
 
+CC_INLINE CC_PURE CC_NONNULL_TU((1))
+size_t ccec_sign_max_size(ccec_const_cp_t cp) {
+	return 3 + 2 * (3 + ccec_cp_prime_size(cp));
+}
+
 ccec_const_cp_t ccec_get_cp(size_t keysize);
 
 CC_NONNULL_TU((3)) CC_NONNULL2

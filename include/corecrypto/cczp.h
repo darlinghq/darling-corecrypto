@@ -60,7 +60,7 @@ typedef void(ccmod_prime_f)(cczp_const_t, cc_unit *, const cc_unit *, cc_ws_t);
 #define CCZP_RECIP(ZP) (((cczp_t)(ZP)).prime->ccn + cczp_n(ZP))
 #define cczp_size(_size_) (sizeof(struct cczp) + ccn_sizeof_n(1) + 2 * (_size_))
 #define CCZP_N(ZP) (((cczp_short_t)(ZP)).zp->n)
-
+#define CCZP_MOD_PRIME(ZP) (((cczp_short_t)(ZP)).zp->mod_prime)
 // Functions
 
 CC_CONST CC_NONNULL_TU((1))

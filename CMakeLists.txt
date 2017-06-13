@@ -48,6 +48,8 @@ add_circular(corecrypto FAT
 		src/ccpad.c
 		src/ccpbkdf2.c
 		src/ccrc4.c
+		src/ccansikdf.c
+		src/ccecies.c
 
 	SIBLINGS
 		system_dyld
