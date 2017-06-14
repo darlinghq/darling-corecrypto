@@ -188,3 +188,17 @@ int ccec_x963_import_priv(ccec_const_cp_t cp, size_t in_len, const uint8_t *in, 
 CC_NONNULL_TU((1,4)) CC_NONNULL3
 int ccec_x963_import_pub(ccec_const_cp_t cp, size_t in_len, const uint8_t *in, ccec_pub_ctx_t key) {
 }
+
+size_t ccec_compact_import_priv_size(size_t in_len) {
+	return 1;
+}
+
+CC_NONNULL_TU((1,4)) CC_NONNULL3
+int ccec_compact_import_priv(ccec_const_cp_t cp, size_t in_len, const uint8_t *in, ccec_full_ctx_t key) {
+	return -1;
+}
+ 
+// Guessed
+int ccec_generate_key_deterministic(ccec_const_cp_t arg0, int arg1, unsigned char *arg2, struct ccrng_state *arg3, int arg4, int arg5) {
+	return -1;
+}
