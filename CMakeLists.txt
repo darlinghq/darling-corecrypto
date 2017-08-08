@@ -26,7 +26,8 @@ add_circular(corecrypto FAT
 		src/ccdh.c
 		src/ccdh_gp.c
 		src/ccaes.c
-		src/ccsha2.c
+		src/ccsha2xx.c
+		src/ccsha3xx.c
 		src/cczp.c
 		src/ccsha1.c
 		src/ccrsa.c
