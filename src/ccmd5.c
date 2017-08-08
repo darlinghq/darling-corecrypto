@@ -306,6 +306,6 @@ static void md5_compress(ccdigest_state_t state, size_t nblocks, const void* in)
 }
 
 const struct ccdigest_info *ccmd5_di(void) {
-    return NULL;
+    return &ccmd5_ltc_di;
 }
 
