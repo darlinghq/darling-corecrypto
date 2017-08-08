@@ -202,3 +202,28 @@ int ccec_compact_import_priv(ccec_const_cp_t cp, size_t in_len, const uint8_t *i
 int ccec_generate_key_deterministic(ccec_const_cp_t arg0, int arg1, unsigned char *arg2, struct ccrng_state *arg3, int arg4, int arg5) {
 	return -1;
 }
+
+struct ccec_rfc6637_wrap
+{
+    int dummy;
+};
+
+struct ccec_rfc6637_unwrap
+{
+    int dummy;
+};
+
+struct ccec_rfc6637_curve
+{
+    int dummy;
+};
+
+
+
+struct ccec_rfc6637_wrap ccec_rfc6637_wrap_sha256_kek_aes128;
+struct ccec_rfc6637_wrap ccec_rfc6637_wrap_sha512_kek_aes256;
+struct ccec_rfc6637_unwrap ccec_rfc6637_unwrap_sha256_kek_aes128;
+struct ccec_rfc6637_unwrap ccec_rfc6637_unwrap_sha512_kek_aes256;
+struct ccec_rfc6637_curve ccec_rfc6637_dh_curve_p256;
+struct ccec_rfc6637_curve ccec_rfc6637_dh_curve_p521;
+
