@@ -31,6 +31,7 @@ add_circular(corecrypto FAT
 		src/ccsha1.c
 		src/ccrsa.c
 		src/ccrng.c
+		src/ccrng_system.c
 		src/ccrc4.c
 		src/ccn.c
 		src/ccmode.c
