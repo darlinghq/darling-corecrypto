@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 Lubos Dolezel
+ * Copyright (c) 2016-2017 Lubos Dolezel
  *
  * This file is part of Darling CoreCrypto.
  *
@@ -19,9 +19,77 @@
 
 #include <corecrypto/ccdigest.h>
 #include <string.h>
+#include <libkern/OSByteOrder.h>
+
+#ifdef __LITTLE_ENDIAN__
+static uint64_t swap64le(uint64_t v) { return v; }
+#define swap64be _OSSwapInt64
+
+static void store32le(uint32_t v, void* dest)
+{
+	memcpy(dest, &v, sizeof(v));
+}
+static void store32be(uint32_t v, void* dest)
+{
+	store32le(OSSwapInt32(v), dest);
+}
+#elif defined(__BIG_ENDIAN__)
+static uint64_t swap64be(uint64_t v) { return v; }
+#define swap64le _OSSwapInt64
+
+static void store32be(uint32_t v, void* dest)
+{
+	memcpy(dest, &v, sizeof(v));
+}
+static void store32le(uint32_t v, void* dest)
+{
+	store32be(OSSwapInt32(v), dest);
+}
+#else
+#error Unknown endianess!
+#endif
+
+void ccdigest_final_64(const struct ccdigest_info *di, ccdigest_ctx_t ctx,
+		                 unsigned char *digest,
+						 uint64_t (*swap64)(uint64_t),
+						 void (*store32)(uint32_t,void*))
+{
+	uint64_t nbits;
+
+	// Add what we have left in to buffer to the total bits processed
+	nbits = ccdigest_nbits(di, ctx) += ccdigest_num(di, ctx) * 8;
+
+	// "Terminating" byte, see SHA1_Final()
+	ccdigest_data(di, ctx)[ccdigest_num(di, ctx)++] = 0200;
+
+	// Push in zeroes until there are exactly 56 bytes in the internal buffer
+	if (ccdigest_num(di, ctx) != 56)
+	{
+		uint8_t zeroes[64];
+		int count;
+
+		count = (56 - ccdigest_num(di, ctx) + 64) % 64;
+		memset(zeroes, 0, count);
+
+		ccdigest_update(di, ctx, count, zeroes);
+	}
+
+	nbits = swap64(nbits);
+
+	// This should flush the block
+	ccdigest_update(di, ctx, sizeof(nbits), &nbits);
+
+	for (int i = 0; i < di->output_size / sizeof(uint32_t); i++)
+		store32(ccdigest_state_u32(di, ctx)[i], &digest[i*4]);
+}
 
 void ccdigest_final_64le(const struct ccdigest_info *di, ccdigest_ctx_t ctx,
                  unsigned char *digest) {
+	ccdigest_final_64(di, ctx, digest, swap64le, store32le);
+}
+void ccdigest_final_64be(const struct ccdigest_info *di, ccdigest_ctx_t ctx,
+                 unsigned char *digest) {
+	ccdigest_final_64(di, ctx, digest, swap64be, store32be);
 }
 
 void ccdigest(const struct ccdigest_info* di, size_t len, const void* data, void* digest)
