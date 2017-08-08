@@ -41,6 +41,7 @@ void cchmac_init(const struct ccdigest_info *di, cchmac_ctx_t ctx,
 	di->compress((struct ccdigest_state*) cchmac_istate32(di, ctx), 1, cchmac_data(di, ctx));
 
 	// Prepare for hashing the message
+	cchmac_nbits(di, ctx) = di->block_size * 8;
 	cchmac_num(di, ctx) = 0;
 }
 
@@ -67,6 +68,7 @@ void cchmac_final(const struct ccdigest_info *di, cchmac_ctx_t ctx,
 	// istate hash is in data
 	// this makes the next ccdigest_final call process it
 	cchmac_num(di, ctx) = di->output_size;
+	cchmac_nbits(di, ctx) = di->block_size * 8;
 
 	ccdigest_final(di, cchmac_digest_ctx(di, ctx), mac);
 }
