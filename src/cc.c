@@ -28,7 +28,7 @@ int ccDRBGGetRngState(void) {
 
 void cc_clear(size_t len, void *dst)
 {
-	memset(len, 0, dst);
+	memset(dst, 0, len);
 }
 
 /* https://cryptocoding.net/index.php/Coding_rules#Avoid_branchings_controlled_by_secret_data */
