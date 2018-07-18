@@ -300,7 +300,7 @@ static void md5_compress(ccdigest_state_t state, size_t nblocks, const void* in)
 
 	for (i = 0; i < nblocks; i++)
 	{
-		MD5Update(ctx, pos, CCMD5_BLOCK_SIZE);
+		MD5Transform(ccdigest_u32(state), pos);
 		pos += CCMD5_BLOCK_SIZE;
 	}
 }
