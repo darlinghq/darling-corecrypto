@@ -18,12 +18,15 @@
  */
 
 #include <corecrypto/cc.h>
+#include <corecrypto/ccrng_system.h>
 #include <string.h>
 #include <stdint.h>
 
 #warning just putting this here until we build CommonCrypto
-int ccDRBGGetRngState(void) {
-	return -1;
+struct ccrng_state * ccDRBGGetRngState(int *error) {
+	struct ccrng_system_state *rng = malloc(sizeof(struct ccrng_system_state));
+	ccrng_system_init(rng);
+	return rng;
 }
 
 void cc_clear(size_t len, void *dst)
