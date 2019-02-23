@@ -3,6 +3,16 @@
 /* Return the number of used units after stripping leading 0 units.  */
 CC_PURE CC_NONNULL2
 cc_size ccn_n(cc_size n, const cc_unit *s) {
+    // Little-endian, so the leading 0 units go at the end.
+
+    // Hopefully constant time,
+    cc_size last = 0;
+    for (cc_size i = 0; i < n; i++) {
+        if (s[i] != 0) {
+            last = i;
+        }
+    }
+    return last + 1;
 }
 
 /* s >> k -> r return bits shifted out of least significant word in bits [0, n>
@@ -32,6 +42,18 @@ void ccn_shift_left_multi(cc_size n, cc_unit *r, const cc_unit *s, size_t k) {
  { N bit } N = n * sizeof(cc_unit) * 8 */
 CC_NONNULL2
 size_t ccn_bitlen(cc_size n, const cc_unit *s) {
+    cc_size used = ccn_n(n, s);
+
+    if (used == 0) {
+        // None of the units are used <=> s == 0.
+        return 0;
+    }
+
+    cc_unit last_used_unit = s[used - 1];
+
+    // CLZ counts the number of leading zero bits in the
+    // the last unit that we know not to be all zeroes.
+    return used * CCN_UNIT_SIZE - __builtin_clzl(last_used_unit);
 }
 
 /* Returns the number of bits which are zero before the first one bit
@@ -122,6 +144,37 @@ void ccn_gcdn(cc_size rn, cc_unit *r, cc_size sn, const cc_unit *s, cc_size tn, 
  doesn't fit in r, return 0 otherwise. */
 CC_NONNULL((2, 4))
 int ccn_read_uint(cc_size n, cc_unit *r, size_t data_size, const uint8_t *data) {
+
+    // The size of r (n) is passed as the number of cc_unit-s,
+    // so we use ccn_sizeof_n() to get its actual byte size.
+    size_t sizeof_r = ccn_sizeof_n(n);
+
+    // Start by pre-zeroing r.
+    memset(r, 0, sizeof_r);
+
+    // Leading zero bytes are insignificant in big endian,
+    // so we can safely skip them.
+    for (; data_size > 0 && *data == 0; data_size--, data++);
+
+    // Now, data_size is the actual number of bytes it will
+    // take to write out the data. Return -1 if we don't have
+    // that much space.
+    if (data_size > sizeof_r) {
+        return -1;
+    }
+
+    // We treat r as little-endian with respect to the order
+    // of the cc_unit-s, but the cc_unit-s themselves are
+    // native-endian (which still means little-endian on
+    // i386/x64).
+    for (long ind = data_size - 1; ind >= 0; r++) {
+        for (int i = 0; i < CCN_UNIT_SIZE && ind >= 0; i++, ind--) {
+            cc_unit c = data[ind];
+            *r |= c << (i * 8);
+        }
+    }
+
+    return 0;
 }
 
 /* Return actual size in bytes needed to serialize s. */
@@ -143,7 +196,7 @@ CC_NONNULL((2, 4))
 void ccn_write_uint(cc_size n, const cc_unit *s, size_t out_size, void *out) {
 }
 
-/*  Return actual size in bytes needed to serialize s as int 
+/*  Return actual size in bytes needed to serialize s as int
     (adding leading zero if high bit is set). */
 CC_PURE CC_NONNULL2
 size_t ccn_write_int_size(cc_size n, const cc_unit *s) {
