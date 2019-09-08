@@ -39,13 +39,16 @@ void* cc_muxp(int s, const void *a, const void *b)
 {
 	uintptr_t mask = -(s != 0);
 	uintptr_t ret = mask & (((uintptr_t)a) ^ ((uintptr_t)b));
-	ret = ret ^ ((uintptr_t)a);
-	return (void*) ret;
+    ret = ret ^ ((uintptr_t)b);
+    return (void*) ret;
 }
 
 /* https://cryptocoding.net/index.php/Coding_rules#Compare_secret_strings_in_constant_time */
 int cc_cmp_safe(size_t size, const void* a, const void* b)
 {
+    if ( size == 0) {
+        return 1;
+    }
 	const unsigned char *_a = (const unsigned char *) a;
 	const unsigned char *_b = (const unsigned char *) b;
 	unsigned char result = 0;
@@ -53,9 +56,9 @@ int cc_cmp_safe(size_t size, const void* a, const void* b)
 
 	for (i = 0; i < size; i++)
 	{
-		result |= _a[i] ^ _b[i];
+		result |=  (unsigned) _a[i] ^ _b[i];
 	}
 
-	return result;
+	return result ? 1 : 0;
 }
 
