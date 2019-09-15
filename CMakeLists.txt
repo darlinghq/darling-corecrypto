@@ -45,48 +45,52 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+
+set(corecrypto_sources
+		src/cc.c
+		src/ccdigest.c
+		src/ccmd2.c
+		src/ccmd4.c
+		src/ccmd5.c
+		src/ccder.c
+		src/ccec.c
+		src/ccdh.c
+		src/ccdh_gp.c
+		src/ccaes.c
+		src/ccsha2xx.c
+		src/ccsha3xx.c
+		src/cczp.c
+		src/ccsha1.c
+		src/ccrsa.c
+		src/ccrng.c
+		src/ccrng_system.c
+		src/ccrc4.c
+		src/ccn.c
+		src/ccmode.c
+		src/ccdes.c
+		src/ccrsa_priv.c
+		src/cccast.c
+		src/ccrc2.c
+		src/ccblowfish.c
+		src/ccnistkdf.c
+		src/ccz.c
+		src/cccmac.c
+		src/ccripemd.c
+		src/cchkdf.c
+		src/cchmac.c
+		src/ccpad.c
+		src/ccpbkdf2.c
+		src/ccrc4.c
+		src/ccansikdf.c
+		src/ccecies.c
+		src/ccrng_pbkdf2.c
+)
+
 if (NOT BUILD_CORECRYPTO_TESTS)
 	set(DYLIB_INSTALL_NAME "/usr/lib/system/libcorecrypto.dylib")
 	add_circular(corecrypto FAT
 		SOURCES
-			src/cc.c
-			src/ccdigest.c
-			src/ccmd2.c
-			src/ccmd4.c
-			src/ccmd5.c
-			src/ccder.c
-			src/ccec.c
-			src/ccdh.c
-			src/ccdh_gp.c
-			src/ccaes.c
-			src/ccsha2xx.c
-			src/ccsha3xx.c
-			src/cczp.c
-			src/ccsha1.c
-			src/ccrsa.c
-			src/ccrng.c
-			src/ccrng_system.c
-			src/ccrc4.c
-			src/ccn.c
-			src/ccmode.c
-			src/ccdes.c
-			src/ccrsa_priv.c
-			src/cccast.c
-			src/ccrc2.c
-			src/ccblowfish.c
-			src/ccnistkdf.c
-			src/ccz.c
-			src/cccmac.c
-			src/ccripemd.c
-			src/cchkdf.c
-			src/cchmac.c
-			src/ccpad.c
-			src/ccpbkdf2.c
-			src/ccrc4.c
-			src/ccansikdf.c
-			src/ccecies.c
-			src/ccrng_pbkdf2.c
-
+			${corecryto_sources}
 		SIBLINGS
 			system_dyld
 			compiler_rt
@@ -103,43 +107,7 @@ if (NOT BUILD_CORECRYPTO_TESTS)
 else (NOT BUILD_CORECRYPTO_TESTS)
 	add_library(corecrypto
 		SHARED
-			src/cc.c
-			src/ccdigest.c
-			src/ccmd2.c
-			src/ccmd4.c
-			src/ccmd5.c
-			src/ccder.c
-			src/ccec.c
-			src/ccdh.c
-			src/ccdh_gp.c
-			src/ccaes.c
-			src/ccsha2xx.c
-			src/ccsha3xx.c
-			src/cczp.c
-			src/ccsha1.c
-			src/ccrsa.c
-			src/ccrng.c
-			src/ccrng_system.c
-			src/ccrc4.c
-			src/ccn.c
-			src/ccmode.c
-			src/ccdes.c
-			src/ccrsa_priv.c
-			src/cccast.c
-			src/ccrc2.c
-			src/ccblowfish.c
-			src/ccnistkdf.c
-			src/ccz.c
-			src/cccmac.c
-			src/ccripemd.c
-			src/cchkdf.c
-			src/cchmac.c
-			src/ccpad.c
-			src/ccpbkdf2.c
-			src/ccrc4.c
-			src/ccansikdf.c
-			src/ccecies.c
-			src/ccrng_pbkdf2.c
+			${corecryto_sources}
 	)
 endif (NOT BUILD_CORECRYPTO_TESTS)
 
