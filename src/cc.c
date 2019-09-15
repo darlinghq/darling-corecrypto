@@ -31,7 +31,10 @@ struct ccrng_state * ccDRBGGetRngState(int *error) {
 
 void cc_clear(size_t len, void *dst)
 {
-	memset(dst, 0, len);
+	volatile unsigned char *ptr = (volatile unsigned char*) dst;
+	while (len--) {
+		*ptr++ = 0;
+	}
 }
 
 /* https://cryptocoding.net/index.php/Coding_rules#Avoid_branchings_controlled_by_secret_data */
