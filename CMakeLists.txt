@@ -90,7 +90,7 @@ if (NOT BUILD_CORECRYPTO_TESTS)
 	set(DYLIB_INSTALL_NAME "/usr/lib/system/libcorecrypto.dylib")
 	add_circular(corecrypto FAT
 		SOURCES
-			${corecryto_sources}
+			${corecrypto_sources}
 		SIBLINGS
 			system_dyld
 			compiler_rt
@@ -107,7 +107,7 @@ if (NOT BUILD_CORECRYPTO_TESTS)
 else (NOT BUILD_CORECRYPTO_TESTS)
 	add_library(corecrypto
 		SHARED
-			${corecryto_sources}
+			${corecrypto_sources}
 	)
 endif (NOT BUILD_CORECRYPTO_TESTS)
 
