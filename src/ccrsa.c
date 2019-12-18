@@ -48,7 +48,22 @@ int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t *oid,
 void ccrsa_init_pub(ccrsa_pub_ctx_t key, const cc_unit *modulus,
                     const cc_unit *e)
 {
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+#if DEBUG
+	printf("DARLING CRYPTO IMPL: %s\n", __PRETTY_FUNCTION__);
+	printf("modulus: %u, e: %u\n", *modulus, *e);
+#endif
+	cc_unit *modulusDest = (cc_unit*)key.pub->b;
+	cc_unit *exponentDest = modulusDest+1;
+	*modulusDest = *modulus;
+	*exponentDest = *e;
+#if DEBUG
+	printf("each byte of key: ");
+	for (int i = 0; i < 16; i++)
+	{
+		printf(" %d", key.pub->b[i]);
+	}
+	printf("\n");
+#endif
 }
 
 int
