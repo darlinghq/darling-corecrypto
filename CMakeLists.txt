@@ -3,9 +3,11 @@ project(darling-corecrypto)
 add_compile_options(
 	-nostdinc
 	-Wno-return-type
+	-Werror
 )
 
 add_definitions(
+	-DDEBUG
 	-D_FILE_OFFSET_BITS=64
 )
 

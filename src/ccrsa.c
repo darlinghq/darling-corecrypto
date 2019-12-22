@@ -1,5 +1,8 @@
 #include <corecrypto/ccrsa.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+// Reference used is https://tools.ietf.org/html/rfc8017
 
 int ccrsa_import_pub(ccrsa_pub_ctx_t key, size_t inlen, const uint8_t *der)
 {
@@ -37,32 +40,117 @@ const uint8_t *ccder_decode_rsa_priv(const ccrsa_full_ctx_t key, const uint8_t *
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
 
+/*
+ * Verify correctness of signature given. Digest is the data being signed.
+ *
+ * The return value is > 0 if there is an other error.
+ * valid is set to false if there is an invalid signature.
+ */
 int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t *oid,
                           size_t digest_len, const uint8_t *digest,
                           size_t sig_len, const uint8_t *sig,
                           bool *valid)
 {
+	*valid = 0;
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+
+	printf("oid: %d\n", *oid);
+	printf("digest: ");
+	for (int i = 0; i < digest_len; i++)
+	{
+		printf("%d ", *(digest+i));
+	}
+	printf("\n");
+
+	printf("lengths: digest: %zu, signature: %zu\n", digest_len, sig_len);
+	printf("sig: ");
+	for (int i = 0; i < sig_len; i++)
+	{
+		printf("%d ", *(sig+i));
+	}
+	printf("\n");
+
+	cc_size mod_size = ccrsa_ctx_n(key);
+	cc_unit *modulus = *((cc_unit **)key.pub->b);
+	cc_unit *exponent = *((cc_unit **)(key.pub->b+1));
+
+	// Maybe this should be determined dynamically
+
+	// Length of signature should equal length of modulus
+	if (sig_len != ccn_bitlen(mod_size, modulus)/8)
+	{
+#if DEBUG
+		printf("not equal: siglen: %zu, modlen: %zu\n", sig_len, ccn_bitlen(mod_size, modulus)/8);
+#endif
+		return 1;
+	}
+
+	// Compute big uint representation of signature
+	cc_size sig_size = sig_len/sizeof(cc_unit);
+	cc_unit *s = malloc(sig_size);
+	if (ccn_read_uint(sig_size, s, sig_len, sig))
+	{
+#if DEBUG
+		printf("%s: failed to read signature\n", __PRETTY_FUNCTION__);
+#endif
+		return 1;
+	}
+
+	cc_unit *zero = calloc(sig_size, sizeof(cc_unit));
+
+	// Verify that s is in the range of 0 and modulus-1
+	if (ccn_cmp(sig_size, s, modulus) >= 0 || ccn_cmp(sig_size, zero, s) == 0)
+	{
+#if DEBUG
+		free(s);
+		free(zero);
+		printf("%s: s not in range of [0, modulus)\n", __PRETTY_FUNCTION__);
+#endif
+		return 1;
+	}
+
+	// m = s^e mod n
+	
+
+	free(s);
+	free(zero);
+
+
 }
 
+/*
+ * Take modulus and exponent and put them next to each other in the public key
+ */
 void ccrsa_init_pub(ccrsa_pub_ctx_t key, const cc_unit *modulus,
                     const cc_unit *e)
 {
 #if DEBUG
 	printf("DARLING CRYPTO IMPL: %s\n", __PRETTY_FUNCTION__);
-	printf("modulus: %u, e: %u\n", *modulus, *e);
+	//printf("modulus: %u, e: %u\n", *modulus, *e);
 #endif
-	cc_unit *modulusDest = (cc_unit*)key.pub->b;
-	cc_unit *exponentDest = modulusDest+1;
-	*modulusDest = *modulus;
-	*exponentDest = *e;
+	cc_size mod_size = ccrsa_ctx_n(key);
+	cc_unit *mod_uint = calloc(mod_size, sizeof(cc_unit));
+	cc_unit *exp_uint = calloc(mod_size, sizeof(cc_unit));
+	cc_unit **modulusDest = (cc_unit **)key.pub->b;
+	cc_unit **exponentDest = modulusDest+1;
+	*modulusDest = mod_uint;
+	*exponentDest = exp_uint;
+	if (ccn_read_uint(mod_size, mod_uint, mod_size*sizeof(cc_unit), (uint8_t *)modulus))
+	{
+		return 1;
+	}
+	if (ccn_read_uint(mod_size, exp_uint, mod_size*sizeof(cc_unit), (uint8_t *)e))
+	{
+		return 1;
+	}
+
 #if DEBUG
-	printf("each byte of key: ");
+	/*printf("each byte of key: ");
 	for (int i = 0; i < 16; i++)
 	{
 		printf(" %d", key.pub->b[i]);
 	}
-	printf("\n");
+	printf("\n");*/
 #endif
 }
 

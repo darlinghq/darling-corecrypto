@@ -21,12 +21,14 @@
 #include <corecrypto/ccrng_system.h>
 #include <string.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
 
-#warning just putting this here until we build CommonCrypto
 struct ccrng_state * ccDRBGGetRngState(int *error) {
+	printf("%s just putting this here until we build CommonCrypto\n", __PRETTY_FUNCTION__);
 	struct ccrng_system_state *rng = malloc(sizeof(struct ccrng_system_state));
 	ccrng_system_init(rng);
-	return rng;
+	return (struct ccrng_state *)rng;
 }
 
 void cc_clear(size_t len, void *dst)

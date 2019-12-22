@@ -1,4 +1,5 @@
 #include <corecrypto/ccdes.h>
+#include <stdio.h>
 
 const struct ccmode_ecb *ccdes_ecb_decrypt_mode(void) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);

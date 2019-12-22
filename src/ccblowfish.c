@@ -1,4 +1,5 @@
 #include <corecrypto/ccblowfish.h>
+#include <stdio.h>
 
 const struct ccmode_ecb *ccblowfish_ecb_decrypt_mode() {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);

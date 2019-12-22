@@ -1,4 +1,5 @@
 #include <corecrypto/ccansikdf.h>
+#include <stdio.h>
 
 int ccansikdf_x963(const struct ccdigest_info *di,
                    const size_t Z_len, const unsigned char *Z,
