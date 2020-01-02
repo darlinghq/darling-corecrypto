@@ -48,6 +48,7 @@ size_t ccn_trailing_zeros(cc_size n, const cc_unit *s) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
 
+// n is in bits
 int ccn_cmp(cc_size n, const cc_unit *s, const cc_unit *t) {
 #if DEBUG
 	printf("DARLING CRYPTO IMPL: %s\n", __PRETTY_FUNCTION__);
@@ -55,14 +56,23 @@ int ccn_cmp(cc_size n, const cc_unit *s, const cc_unit *t) {
 	// Assumes these are all unsigned, if signed, look at first bit
 	// for sign
 	
-	// Assumes big endian
-	for (cc_size i = 0; i < n; i++)
+	// TODO: handle when bits isn't aligned with a cc_unit
+	cc_size unit_count = ccn_nof(n);
+#if DEBUG
+	cc_size unit_bytes = ccn_sizeof_n(unit_count);
+	printf("passed in bits: %zu, resulting units: %zu, bytes: %zu\n", n, unit_count, unit_bytes);
+#endif
+	for (cc_size i = 0; i < unit_count; i++)
 	{
-		if (s[i] < t[i])
+#if DEBUG
+		printf("i: %zu, offset: %zu\n", i, unit_count-i-1);
+#endif
+		int offset = unit_count-i-1;
+		if (s[offset] < t[offset])
 		{
 			return -1;
 		}
-		else if (s[i] > t[i])
+		else if (s[offset] > t[offset])
 		{
 			return 1;
 		}
