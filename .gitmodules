@@ -1,0 +1,3 @@
+[submodule "external/ctest"]
+	path = external/ctest
+	url = git@github.com:farmisen/ctest.git
