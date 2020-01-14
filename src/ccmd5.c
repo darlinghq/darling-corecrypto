@@ -108,7 +108,7 @@ Rotation is separate from addition to prevent recomputation.
 #define MD5_memcpy memcpy
 #define MD5_memset memset
 
-static void Decode (UINT4 *output, unsigned char *input, unsigned int len)
+static void Decode (UINT4 *output, const unsigned char *input, unsigned int len)
 {
 	unsigned int i, j;
 
@@ -129,7 +129,7 @@ static void Encode (unsigned char *output, UINT4 *input, unsigned int len)
 	}
 }
 
-static void MD5Transform (UINT4 state[4], unsigned char block[64])
+static void MD5Transform (UINT4 state[4], const unsigned char block[64])
 {
 	UINT4 a = state[0], b = state[1], c = state[2], d = state[3], x[16];
 
@@ -222,7 +222,7 @@ static void MD5Transform (UINT4 state[4], unsigned char block[64])
 		  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
   };
 
-  static void MD5Update (struct MD5_CTX *context, unsigned char *input, unsigned int inputLen)
+  static void MD5Update (struct MD5_CTX *context, const unsigned char *input, unsigned int inputLen)
   {
 	  unsigned int i, index, partLen;
 

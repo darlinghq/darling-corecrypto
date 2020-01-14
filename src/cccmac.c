@@ -1,4 +1,5 @@
 #include <corecrypto/cccmac.h>
+#include <stdio.h>
 
 int cccmac_init(const struct ccmode_cbc *cbc, cccmac_ctx_t ctx, int key_length, const void *key) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);

@@ -86,7 +86,7 @@ struct MD4_CTX {
 #define G(x, y, z) (((x) & (y)) | ((x) & (z)) | ((y) & (z)))
 #define H(x, y, z) ((x) ^ (y) ^ (z))
 
-static void Decode (UINT4 *output, unsigned char *input, unsigned int len)
+static void Decode (UINT4 *output, const unsigned char *input, unsigned int len)
 {
 	unsigned int i, j;
 
@@ -107,7 +107,7 @@ static void Encode (unsigned char *output, UINT4 *input, unsigned int len)
 	}
 }
 
-static void MD4Transform (UINT4 state[4], unsigned char block[64])
+static void MD4Transform (UINT4 state[4], const unsigned char block[64])
 {
 	UINT4 a = state[0], b = state[1], c = state[2], d = state[3], x[16];
 
@@ -183,7 +183,7 @@ static const unsigned char PADDING[64] = {
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-static void MD4Update (struct MD4_CTX *context, unsigned char *input, unsigned int inputLen)
+static void MD4Update (struct MD4_CTX *context, const unsigned char *input, unsigned int inputLen)
 {
 	unsigned int i, index, partLen;
 

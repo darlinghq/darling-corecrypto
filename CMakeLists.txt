@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 2.8)
-
 project(darling-corecrypto C)
 
 # User option to turn the corecrypto specific tests
@@ -30,14 +28,17 @@ if (NOT BUILD_CORECRYPTO_TESTS)
 	add_compile_options(
 		-nostdinc
 		-Wno-return-type
+    -Werror
 	)
 else (NOT BUILD_CORECRYPTO_TESTS)
 	add_compile_options(
 		-Wno-return-type
+    -Werror
 	)
 endif (NOT BUILD_CORECRYPTO_TESTS)
 
 add_definitions(
+	-DDEBUG
 	-D_FILE_OFFSET_BITS=64
 )
 

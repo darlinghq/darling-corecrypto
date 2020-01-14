@@ -100,7 +100,7 @@ struct MD2_CTX {
 	unsigned char buffer[16];                         /* input buffer */
 };
 
-static void MD2Transform (unsigned char state[16], unsigned char checksum[16], unsigned char block[16])
+static void MD2Transform (unsigned char state[16], unsigned char checksum[16], const unsigned char block[16])
 {
 	unsigned int i, j, t;
 	unsigned char x[48];
@@ -135,7 +135,7 @@ static void MD2Transform (unsigned char state[16], unsigned char checksum[16], u
 }
 
 
-static void MD2Update(struct MD2_CTX* context, unsigned char* input, unsigned int inputLen)
+static void MD2Update(struct MD2_CTX* context, const unsigned char* input, unsigned int inputLen)
 {
 	unsigned int i, index, partLen;
 

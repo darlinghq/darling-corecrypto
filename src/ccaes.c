@@ -1,4 +1,5 @@
 #include <corecrypto/ccaes.h>
+#include <stdio.h>
 
 const struct ccmode_ecb *ccaes_ecb_encrypt_mode(void) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
