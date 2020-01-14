@@ -1,5 +1,6 @@
 #include <corecrypto/cczp.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 void cczp_init(cczp_t zp)
 {
@@ -29,8 +30,8 @@ for i := n − 1 .. 0 do  -- Where n is number of bits in N
   end
 end
 */
-	cc_unit *mod = CCZP_PRIME(zp->zp);
-	const cc_size n = CCZP_N(zp.zp);
+	const cc_unit *mod = cczp_prime(zp);
+	const cc_size n = cczp_n(zp);
 	const cc_size s2n_bits = ccn_bitlen(n*2, s2n);
 
 	for (int i = s2n_bits-1; i >= 0; i--)
@@ -46,7 +47,7 @@ end
 
 		r[0] |= (s2n[i/CCN_UNIT_SIZE] & mask) >> (i % CCN_UNIT_SIZE);
 
-		if (ccn_cmp(n, r, mod) > 0)
+		if (ccn_cmp(ccn_bitsof_n(n), r, mod) > 0)
 		{
 			ccn_sub(n, r, r, mod);
 		}
@@ -84,17 +85,20 @@ void cczp_power(cczp_const_t zp, cc_unit *r, const cc_unit *m,
         base := (base * base) mod modulus
     return result
 */
+	cc_size n = cczp_n(zp);
+	cc_size n_sizeof = ccn_sizeof_n(n);
+
 	// Initialize result
-	memset(r, 0, ccn_sizeof_n(CCZP_N(zp)));
+	memset(r, 0, n_sizeof);
 
 	// If mod equals 1, return zero
-	int one = 1;
-	ccn_read_uint(CCZP_N(zp), r, sizeof(int), &one);
-	if (ccn_cmp(CCZP_N(zp), r, CCZP_PRIME(zp)) == 0)
+	uint8_t one = 1;
+	ccn_read_uint(n, r, sizeof(int), &one);
+	if (ccn_cmp(ccn_bitsof_n(n), r, cczp_prime(zp)) == 0)
 	{
 		// Return zero as result, x mod 1 is zero
 		one = 0;
-		ccn_read_uint(CCZP_N(zp), r, sizeof(int), &one);
+		ccn_read_uint(n, r, sizeof(uint8_t), &one);
 		return;
 	}
 
@@ -102,16 +106,18 @@ void cczp_power(cczp_const_t zp, cc_unit *r, const cc_unit *m,
 	
 	// Result is still one at this point
 	
-	cc_unit *base = malloc(ccn_sizeof_n(CCZP_N(zp)*2));
-	memset(base, 0, ccn_sizeof_n(CCZP_N(zp))*2);
-	memcpy(base, m, ccn_sizeof_n(CCZP_N(zp)));
+	cc_unit *base = malloc(n_sizeof*2);
+	memset(base, 0, n_sizeof*2);
+	memcpy(base, m, n_sizeof);
 
 	// Use a workspace size 2n+1 because ws.end is non-inclusive end pointer
 	cc_ws_t ws;
-	ws.start = malloc(CCZP_N(n)*2+1);
-	ws.end = ws.start+(CCZP_N(n)*2);
+	ws->start = malloc(n*2+1);
+	ws->end = ws->start+(n*2);
 
 	// ccn integers are little endian, so it's OK that the 3rd parameter
 	// is length 2n (despite not needing it)
-	CCZP_MOD_PRIME(zp)(zp, base, base, ws);
+	cczp_mod_prime(zp)(zp, base, base, ws);
+
+	free(ws->start);
 }

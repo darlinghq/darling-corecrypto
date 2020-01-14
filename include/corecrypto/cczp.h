@@ -65,28 +65,30 @@ typedef void(ccmod_prime_f)(cczp_const_t, cc_unit *, const cc_unit *, cc_ws_t);
 
 // Functions
 
-CC_CONST CC_NONNULL_TU((1))
-CC_INLINE cc_size cczp_n(cczp_const_short_t zp) {
-    return zp.zp->n;
+CC_CONST CC_INLINE cc_size cczp_n(cczp_const_short_t zp)
+{
+	return zp.zp->n;
 }
 
-CC_CONST CC_NONNULL_TU((1))
-CC_INLINE const cc_unit *cczp_recip(cczp_const_t zp) {
-    return zp.u + cczp_n(zp) + ccn_nof_size(sizeof(struct cczp));
+CC_CONST CC_INLINE const cc_unit *cczp_recip(cczp_const_t zp)
+{
+	return zp.u + cczp_n(zp) + ccn_nof_size(sizeof(struct cczp));
 }
 
-CC_CONST CC_NONNULL_TU((1))
-CC_INLINE const cc_unit *cczp_prime(cczp_const_short_t zp) {
-    return zp.u + ccn_nof_size(sizeof(struct cczp));
+CC_CONST CC_INLINE const cc_unit *cczp_prime(cczp_const_short_t zp)
+{
+	return zp.u + ccn_nof_size(sizeof(struct cczp));
 }
 
-CC_NONNULL_TU((1))
+CC_CONST CC_INLINE ccmod_prime_f *cczp_mod_prime(cczp_const_t zp)
+{
+	return zp.zp->mod_prime;
+}
+
 void cczp_init(cczp_t zp);
 
-CC_NONNULL_TU((1)) CC_NONNULL((2, 3))
 void cczp_mod(cczp_const_t zp, cc_unit *r, const cc_unit *s2n, cc_ws_t ws);
 
-CC_NONNULL_TU((1)) CC_NONNULL((2, 3, 4))
 void cczp_power(cczp_const_t zp, cc_unit *r, const cc_unit *m,
                 const cc_unit *e);
 
