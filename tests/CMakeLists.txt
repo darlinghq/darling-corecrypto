@@ -4,8 +4,8 @@ set(TEST_SOURCES
 	cc_priv_tests.c
 )
 
-add_executable(test_corecrypto ${TEST_SOURCES})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ctest)
 
-target_link_libraries(test_corecrypto ctest corecrypto)
+add_darling_executable(test_corecrypto ${TEST_SOURCES})
 
-add_test(TestCorecrypto test_corecrypto)
+install(TARGETS test_corecrypto DESTINATION libexec/darling/usr/libexec)
