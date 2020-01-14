@@ -1,5 +1,6 @@
 #include <corecrypto/ccn.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 cc_size ccn_n(cc_size n, const cc_unit *s) {
     // Little-endian, so the leading 0 units go at the end.
@@ -21,8 +22,24 @@ void ccn_shift_right_multi(cc_size n, cc_unit *r,const cc_unit *s, size_t k) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
 
+/*
+ * k must be <= CCN_UNIT_BITS
+ *
+ * r and s may be equal
+ */
 cc_unit ccn_shift_left(cc_size n, cc_unit *r, const cc_unit *s, size_t k) {
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	cc_unit overlap = 0;
+	cc_unit temp;
+
+	for (size_t i = n-1; i >= 0; i--)
+	{
+		temp = s[i];
+		r[i] = overlap;
+		r[i] |= temp << k;
+		overlap = temp >> (CCN_UNIT_BITS-k);
+	}
+
+	return overlap;
 }
 
 void ccn_shift_left_multi(cc_size n, cc_unit *r, const cc_unit *s, size_t k) {
@@ -49,7 +66,8 @@ size_t ccn_trailing_zeros(cc_size n, const cc_unit *s) {
 }
 
 // n is in bits
-int ccn_cmp(cc_size n, const cc_unit *s, const cc_unit *t) {
+int ccn_cmp(cc_size n, const cc_unit *s, const cc_unit *t)
+{
 #if DEBUG
 	printf("DARLING CRYPTO IMPL: %s\n", __PRETTY_FUNCTION__);
 #endif
@@ -80,8 +98,22 @@ int ccn_cmp(cc_size n, const cc_unit *s, const cc_unit *t) {
 	return 0;
 }
 
-cc_unit ccn_sub(cc_size n, cc_unit *r, const cc_unit *s, const cc_unit *t) {
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+/*
+ * r = s - t
+ */
+cc_unit ccn_sub(cc_size n, cc_unit *r, const cc_unit *s, const cc_unit *t)
+{
+	cc_unit *s_copy = malloc(ccn_sizeof_n(n));
+	memcpy(s_copy, s, ccn_sizeof_n(n));
+	for (cc_size i = 0; i < n; i++)
+	{
+		s_copy[i] = ~s_copy[i];
+	}
+	ccn_add1(n, s_copy, s_copy, 1);
+	ccn_add(n, s_copy, s_copy, t);
+	// Remove greatest significance bit
+	s_copy[n-1] &= CCN_UNIT_MASK >> 1;
+	memcpy(r, s_copy, ccn_sizeof_n(n));
 }
 
 cc_unit ccn_abs(cc_size n, cc_unit *r, const cc_unit *s, const cc_unit *t) {
@@ -96,8 +128,30 @@ cc_unit ccn_add(cc_size n, cc_unit *r, const cc_unit *s, const cc_unit *t) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
 
-cc_unit ccn_add1(cc_size n, cc_unit *r, const cc_unit *s, cc_unit v) {
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+cc_unit ccn_add1(cc_size n, cc_unit *r, const cc_unit *s, cc_unit v)
+{
+	cc_size i;
+	cc_unit last = s[n-1];
+	cc_unit current;
+	memcpy(r, s, ccn_sizeof_n(n));
+	for (i = 0; i < n-1; i++)
+	{
+		current = r[i];
+		// Handle overflow
+		if (current + v < current)
+		{
+			r[i] = CCN_UNIT_MASK;
+			v = current+v;
+
+		}
+		else
+		{
+			r[i] = current + v;
+			return 0;
+		}
+	}
+	return v;
+
 }
 
 void ccn_lcm(cc_size n, cc_unit *r2n, const cc_unit *s, const cc_unit *t) {
