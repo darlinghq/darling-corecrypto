@@ -137,7 +137,20 @@ cc_unit ccn_sub1(cc_size n, cc_unit *r, const cc_unit *s, cc_unit v) {
 }
 
 cc_unit ccn_add(cc_size n, cc_unit *r, const cc_unit *s, const cc_unit *t) {
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	cc_unit carry = 0;
+	for (int i = 0; i < n; i++)
+	{
+		cc_unit s_current = s[i];
+		cc_unit t_current = t[i];
+		cc_unit sum = s_current + t_current + carry;
+		r[i] = sum;
+		// Overflow check
+		if (s_current > sum || t_current > sum || carry > sum)
+		{
+			carry = 1;
+		}
+	}
+	return carry;
 }
 
 cc_unit ccn_add1(cc_size n, cc_unit *r, const cc_unit *s, cc_unit v)

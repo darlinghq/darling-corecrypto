@@ -147,3 +147,36 @@ CTEST(ccn, ccn_add1)
 	ASSERT_EQUAL_U(expected_ret, actual_ret);
 	ASSERT_CCN_UNIT(expected, input, units);
 }
+
+CTEST(ccn, ccn_add)
+{
+	cc_size units = 4;
+#ifdef __LP64__
+	cc_unit s[] =
+	{
+		0x5576926b5b86daa2,
+		0x727bf09f26f29171,
+		0x7f2aa5b048e40709,
+		0x728a0541435f2926
+	};
+	const cc_unit t[] =
+	{
+		0x1c86a0584a890009,
+		0x68617519564ef1d8,
+		0x58e7c82c5906ee4d,
+		0x56072ee47197a6db
+	};
+	const cc_unit expected_s[] =
+	{
+		0x71fd32c3a60fdaab,
+		0xdadd65b87d418349,
+		0xd8126ddca1eaf556,
+		0xc8913425b4f6d001
+	};
+	const cc_unit expected_ret = 0x0;
+	// expected 0xab at offset 0 got 0x44
+#endif
+	cc_unit actual_ret = ccn_add(units, s, s, t);
+	ASSERT_EQUAL_U(expected_ret, actual_ret);
+	ASSERT_CCN_UNIT(expected_s, s, units);
+}
