@@ -7,12 +7,14 @@
 	(const uint8_t *)act,\
 	ccn_sizeof_n(n))
 
-CTEST(ccn, ccn_shift_right) {
+CTEST(ccn, ccn_shift_right)
+{
 	const cc_size units = 16;
 	const cc_size shift = 24;
 
 #ifdef __LP64__
-	cc_unit input[] = {
+	cc_unit input[] =
+	{
 		0x179b057f4285e0f4,
 		0x6373d54a49b82048,
 		0x574f7cc723891999,
@@ -31,7 +33,8 @@ CTEST(ccn, ccn_shift_right) {
 		0xe6958c92643fb83
 	};
 
-	const cc_unit expected[] = {
+	const cc_unit expected[] =
+	{
 		0xb82048179b057f42,
 		0x8919996373d54a49,
 		0x705fcf574f7cc723,
@@ -58,12 +61,14 @@ CTEST(ccn, ccn_shift_right) {
 	ASSERT_CCN_UNIT(expected, input, units);
 }
 
-CTEST(ccn, ccn_shift_left) {
+CTEST(ccn, ccn_shift_left)
+{
 	const cc_size units = 16;
 	const cc_size shift = 24;
 
 #ifdef __LP64__
-	cc_unit input[] = {
+	cc_unit input[] =
+	{
 		0x2252d3ec6bd73c8e,
 		0x7fc8c5f1563b92c1,
 		0x611fe9217602a757,
@@ -81,7 +86,8 @@ CTEST(ccn, ccn_shift_left) {
 		0x45aac2da4dde99f1,
 		0x514cc5270723ad24
 	};
-	const cc_unit expected[] = {
+	const cc_unit expected[] =
+	{
 		0xec6bd73c8e000000,
 		0xf1563b92c12252d3,
 		0x217602a7577fc8c5,
@@ -102,8 +108,42 @@ CTEST(ccn, ccn_shift_left) {
 	cc_unit expected_ret = 0x514cc5;
 #endif
 
-	cc_unit actual_ret = ccn_shift_left(units, input, input, shift);
+	const cc_unit actual_ret = ccn_shift_left(units, input, input, shift);
 
+	ASSERT_EQUAL_U(expected_ret, actual_ret);
+	ASSERT_CCN_UNIT(expected, input, units);
+}
+
+CTEST(ccn, ccn_add1)
+{
+	cc_size units = 8;
+#ifdef __LP64__
+	cc_unit input[] =
+	{
+		0x25737a8a40720d3b,
+		0x7fc2bd8a4a29f08d,
+		0x76fdf05419ac513,
+		0x1800840b49dcfa7c,
+		0x4ac108c647272581,
+		0x5b0f5ca54d8b8357,
+		0x25bec8761059446,
+		0x3549b16d791f866f
+	};
+	const cc_unit expected[] =
+	{
+		0x25737a8a40720d3a,
+		0x7fc2bd8a4a29f08e,
+		0x76fdf05419ac513,
+		0x1800840b49dcfa7c,
+		0x4ac108c647272581,
+		0x5b0f5ca54d8b8357,
+		0x25bec8761059446,
+		0x3549b16d791f866f
+	};
+	const cc_unit v = 0xffffffffffffffff;
+	const cc_unit expected_ret = 0x0;
+#endif
+	cc_unit actual_ret = ccn_add1(units, input, input, v);
 	ASSERT_EQUAL_U(expected_ret, actual_ret);
 	ASSERT_CCN_UNIT(expected, input, units);
 }

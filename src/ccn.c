@@ -144,22 +144,22 @@ cc_unit ccn_add1(cc_size n, cc_unit *r, const cc_unit *s, cc_unit v)
 {
 	cc_size i;
 	cc_unit last = s[n-1];
-	cc_unit current;
+	const cc_unit max = CCN_UNIT_MASK;
 	memcpy(r, s, ccn_sizeof_n(n));
-	for (i = 0; i < n-1; i++)
+	for (i = 0; i < n; i++)
 	{
-		current = r[i];
 		// Handle overflow
-		if (current + v < current)
+		if (r[i] + v < r[i])
 		{
-			r[i] = CCN_UNIT_MASK;
-			v = current+v;
+			r[i] += v;
+			v = 1;
 
 		}
 		else
 		{
-			r[i] = current + v;
-			return 0;
+			r[i] += v;
+			v = 0;
+			break;
 		}
 	}
 	return v;
