@@ -41,18 +41,17 @@ void ccn_shift_right_multi(cc_size n, cc_unit *r, const cc_unit *s, size_t k) {
  * r and s may be equal
  */
 cc_unit ccn_shift_left(cc_size n, cc_unit *r, const cc_unit *s, size_t k) {
-	cc_unit overlap = 0;
+	cc_unit carry = 0;
 	cc_unit temp;
 
-	for (int i = n-1; i >= 0; i--)
+	for (int i = 0; i < n; i++)
 	{
 		temp = s[i];
-		r[i] = overlap;
-		r[i] |= temp << k;
-		overlap = temp >> (CCN_UNIT_BITS-k);
+		r[i] = temp << k;
+		r[i] |= carry;
+		carry = temp >> (CCN_UNIT_BITS - k);
 	}
-
-	return overlap;
+	return carry;
 }
 
 void ccn_shift_left_multi(cc_size n, cc_unit *r, const cc_unit *s, size_t k) {
