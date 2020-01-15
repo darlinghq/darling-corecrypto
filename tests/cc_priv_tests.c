@@ -1,5 +1,5 @@
 #include <ctest.h>
-#include "../include/corecrypto/cc_priv.h"
+#include <corecrypto/cc_priv.h>
 
 CTEST(cc, cc_muxp) {
 	const unsigned char a;

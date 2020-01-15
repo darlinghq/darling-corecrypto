@@ -15,10 +15,23 @@ cc_size ccn_n(cc_size n, const cc_unit *s) {
     return last + 1;
 }
 
+/*
+ * shift over k bits in direction of least significance
+ */
 cc_unit ccn_shift_right(cc_size n, cc_unit *r, const cc_unit *s, size_t k) {
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	cc_unit carry = 0;
+	cc_unit temp;
+
+	for (int i = n-1; i >= 0; i--)
+	{
+		temp = s[i];
+		r[i] = temp >> k;
+		r[i] |= carry;
+		carry = temp << (CCN_UNIT_BITS - k);
+	}
+	return carry;
 }
-void ccn_shift_right_multi(cc_size n, cc_unit *r,const cc_unit *s, size_t k) {
+void ccn_shift_right_multi(cc_size n, cc_unit *r, const cc_unit *s, size_t k) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
 
@@ -31,7 +44,7 @@ cc_unit ccn_shift_left(cc_size n, cc_unit *r, const cc_unit *s, size_t k) {
 	cc_unit overlap = 0;
 	cc_unit temp;
 
-	for (size_t i = n-1; i >= 0; i--)
+	for (int i = n-1; i >= 0; i--)
 	{
 		temp = s[i];
 		r[i] = overlap;

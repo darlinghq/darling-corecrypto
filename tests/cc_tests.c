@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <ctest.h>
-#include "../include/corecrypto/cc.h"
+#include <corecrypto/cc.h>
 
 enum { SIZE = 256 };
 
