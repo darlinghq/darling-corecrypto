@@ -96,8 +96,7 @@ int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t *oid,
 
 
 	// Verify that s is in the range of 0 and modulus-1
-	cc_size sig_bits = ccn_bitsof_size(sig_bytes);
-	if (ccn_cmp(sig_bits, s, modulus) >= 0 || ccn_bitlen(sig_units, s) == 0)
+	if (ccn_cmp(sig_units, s, modulus) >= 0 || ccn_bitlen(sig_units, s) == 0)
 	{
 #if DEBUG
 		printf("%s: s not in range of [0, modulus)\n", __PRETTY_FUNCTION__);

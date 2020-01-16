@@ -77,32 +77,22 @@ size_t ccn_trailing_zeros(cc_size n, const cc_unit *s) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
 
-// n is in bits
+/*
+ * Compare s to t, each of length n units
+ *
+ * Returns 1 if s > t
+ * Returns 0 if s == t
+ * Returns -1 if s < t
+ */
 int ccn_cmp(cc_size n, const cc_unit *s, const cc_unit *t)
 {
-#if DEBUG
-	printf("DARLING CRYPTO IMPL: %s\n", __PRETTY_FUNCTION__);
-#endif
-	// Assumes these are all unsigned, if signed, look at first bit
-	// for sign
-	
-	// TODO: handle when bits isn't aligned with a cc_unit
-	cc_size unit_count = ccn_nof(n);
-#if DEBUG
-	cc_size unit_bytes = ccn_sizeof_n(unit_count);
-	printf("passed in bits: %zu, resulting units: %zu, bytes: %zu\n", n, unit_count, unit_bytes);
-#endif
-	for (cc_size i = 0; i < unit_count; i++)
+	for (int i = n-1; i >= 0; i--)
 	{
-#if DEBUG
-		printf("i: %zu, offset: %zu\n", i, unit_count-i-1);
-#endif
-		int offset = unit_count-i-1;
-		if (s[offset] < t[offset])
+		if (s[i] < t[i])
 		{
 			return -1;
 		}
-		else if (s[offset] > t[offset])
+		else if (s[i] > t[i])
 		{
 			return 1;
 		}
@@ -112,20 +102,31 @@ int ccn_cmp(cc_size n, const cc_unit *s, const cc_unit *t)
 
 /*
  * r = s - t
+ *
+ * Implemented using https://en.wikipedia.org/wiki/Method_of_complements
+ *
  */
 cc_unit ccn_sub(cc_size n, cc_unit *r, const cc_unit *s, const cc_unit *t)
 {
-	cc_unit *s_copy = malloc(ccn_sizeof_n(n));
-	memcpy(s_copy, s, ccn_sizeof_n(n));
-	for (cc_size i = 0; i < n; i++)
+	// Compare to determine if there will be underflow
+	// Must be done now because r could be the same as s or t
+	cc_unit underflow = ccn_cmp(n, s, t) < 0;
+	// Make t one's complement
+	cc_unit *t_copy = malloc(ccn_sizeof_n(n));
+	for (int i = 0; i < n; i++)
 	{
-		s_copy[i] = ~s_copy[i];
+		t_copy[i] = ~t[i];
 	}
-	ccn_add1(n, s_copy, s_copy, 1);
-	ccn_add(n, s_copy, s_copy, t);
-	// Remove greatest significance bit
-	s_copy[n-1] &= CCN_UNIT_MASK >> 1;
-	memcpy(r, s_copy, ccn_sizeof_n(n));
+
+	// Add one to make it two's complement
+	ccn_add1(n, t_copy, t_copy, 1);
+
+	// Perform addition between s and the two's complement of t
+	ccn_add(n, r, s, t_copy);
+
+	free(t_copy);
+	return underflow;
+
 }
 
 cc_unit ccn_abs(cc_size n, cc_unit *r, const cc_unit *s, const cc_unit *t) {
@@ -136,6 +137,9 @@ cc_unit ccn_sub1(cc_size n, cc_unit *r, const cc_unit *s, cc_unit v) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
 
+/*
+ * r = s + t
+ */
 cc_unit ccn_add(cc_size n, cc_unit *r, const cc_unit *s, const cc_unit *t) {
 	cc_unit carry = 0;
 	for (int i = 0; i < n; i++)
@@ -145,9 +149,13 @@ cc_unit ccn_add(cc_size n, cc_unit *r, const cc_unit *s, const cc_unit *t) {
 		cc_unit sum = s_current + t_current + carry;
 		r[i] = sum;
 		// Overflow check
-		if (s_current > sum || t_current > sum || carry > sum)
+		if (s_current > sum - carry)
 		{
 			carry = 1;
+		}
+		else
+		{
+			carry = 0;
 		}
 	}
 	return carry;

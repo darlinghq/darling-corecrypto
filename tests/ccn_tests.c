@@ -174,9 +174,39 @@ CTEST(ccn, ccn_add)
 		0xc8913425b4f6d001
 	};
 	const cc_unit expected_ret = 0x0;
-	// expected 0xab at offset 0 got 0x44
 #endif
 	cc_unit actual_ret = ccn_add(units, s, s, t);
 	ASSERT_EQUAL_U(expected_ret, actual_ret);
 	ASSERT_CCN_UNIT(expected_s, s, units);
+}
+CTEST(ccn, ccn_sub)
+{
+	cc_size units = 4;
+#ifdef __LP64__
+	cc_unit s[] =
+	{
+		0x70af358e7ee5376d,
+		0x7a9a16301a26e832,
+		0x705638072c788d2f,
+		0x1e7d1f78289d0eeb
+	};
+	const cc_unit t[] =
+	{
+		0x5f3e7b217f05e460,
+		0x5bd49bc6633f1343,
+		0x4209c69c0fce4da3,
+		0x314b107037244258
+	};
+	const cc_unit expected_s[] =
+	{
+		0x1170ba6cffdf530d,
+		0x1ec57a69b6e7d4ef,
+		0x2e4c716b1caa3f8c,
+		0xed320f07f178cc93
+	};
+	const cc_unit expected_ret = 0x1;
+#endif
+	cc_unit actual_ret = ccn_sub(units, s, s, t);
+	ASSERT_CCN_UNIT(expected_s, s, units);
+	ASSERT_EQUAL_U(expected_ret, actual_ret);
 }

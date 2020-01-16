@@ -47,7 +47,7 @@ end
 
 		r[0] |= (s2n[i/CCN_UNIT_SIZE] & mask) >> (i % CCN_UNIT_SIZE);
 
-		if (ccn_cmp(ccn_bitsof_n(n), r, mod) > 0)
+		if (ccn_cmp(n, r, mod) > 0)
 		{
 			ccn_sub(n, r, r, mod);
 		}
@@ -94,7 +94,7 @@ void cczp_power(cczp_const_t zp, cc_unit *r, const cc_unit *m,
 	// If mod equals 1, return zero
 	uint8_t one = 1;
 	ccn_read_uint(n, r, sizeof(int), &one);
-	if (ccn_cmp(ccn_bitsof_n(n), r, cczp_prime(zp)) == 0)
+	if (ccn_cmp(n, r, cczp_prime(zp)) == 0)
 	{
 		// Return zero as result, x mod 1 is zero
 		one = 0;
