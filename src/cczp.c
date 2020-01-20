@@ -34,9 +34,39 @@ end
 	const cc_size n = cczp_n(zp);
 	const cc_size s2n_bits = ccn_bitlen(n*2, s2n);
 
+	cc_unit *scratch = malloc(ccn_sizeof_n(n));
+
+	printf("prime:\n");
+	ccn_print(n, mod);
+	printf("m:\n");
+	ccn_print(n*2, s2n);
+
+	// Just to get correct answer, repeatedly add until we are greater.
+	if (ccn_cmp(n, mod, s2n) > 0)
+	{
+		memcpy(r, s2n, ccn_sizeof_n(n));
+		ccn_print(n, r);
+	} else {
+		// Repeatedly add mod until it's greater than s2n
+		memcpy(scratch, mod, ccn_sizeof_n(n));
+		while (ccn_cmp(n, mod, scratch) < 0) {
+			cc_unit overflow = ccn_add(n, scratch, mod, scratch);
+			if (overflow)
+			{
+				printf("something went wrong\n");
+				break;
+			}
+		}
+		// The remainder is now scratch - s2n
+		ccn_sub(n, scratch, scratch, s2n);
+		printf("remainder:\n");
+		ccn_print(n, scratch);
+	}
+	/*
+
 	for (int i = s2n_bits-1; i >= 0; i--)
 	{
-		cc_unit leftmost_bit = ccn_shift_left(n, r, r, 1);
+		cc_unit leftmost_bit = ccn_shift_right(n, r, r, 1);
 		if (leftmost_bit != 0)
 		{
 			printf("%s: unexpected overflow\n", __PRETTY_FUNCTION__);
@@ -51,7 +81,7 @@ end
 		{
 			ccn_sub(n, r, r, mod);
 		}
-	}
+	}*/
 }
 
 /*

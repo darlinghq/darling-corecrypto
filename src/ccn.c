@@ -274,15 +274,15 @@ void ccn_zero_multi(cc_size n, cc_unit *r, ...) {
 }
 
 void ccn_print(cc_size n, const cc_unit *s) {
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
-	// Just print each cc_unit in order for now
 	printf("size: %zu\n", n);
 	for (int i = 0; i < n; i++)
 	{
-		printf("todo");
-		//printf("%llu ", s[i]);
+#if CCN_UNIT_SIZE == 8
+		printf("%llx\n", s[i]);
+#elif CCN_UNIT_SIZE == 4
+		printf("%x\n", s[i]);
+#endif
 	}
-	printf("\n");
 }
 
 void ccn_lprint(cc_size n, const char *label, const cc_unit *s) {

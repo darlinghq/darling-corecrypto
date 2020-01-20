@@ -3,6 +3,7 @@ set(TEST_SOURCES
 	cc_tests.c
 	cc_priv_tests.c
 	ccn_tests.c
+	cczp_tests.c
 )
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/ctest)
