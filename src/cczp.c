@@ -34,8 +34,19 @@ end
 	const cc_size n = cczp_n(zp);
 	const cc_size s2n_bits = ccn_bitlen(n*2, s2n);
 
-	cc_unit *scratch = malloc(ccn_sizeof_n(n));
+	cc_unit *q2n = malloc(ccn_sizeof_n(n)*2);
+	cc_unit *r2n = malloc(ccn_sizeof_n(n)*2);
+	memset(q2n, 0, ccn_sizeof_n(n)*2);
+	memset(r2n, 0, ccn_sizeof_n(n)*2);
+	for (int i = s2n_bits-1; i >= 0; i--)
+	{
+		ccn_shift_left(n*2, r2n, r2n, 1);
+		// Set least significant bit of r2n equal to bit i of s2n
+	}
 
+	free(q2n);
+	free(r2n);
+	/*
 	printf("prime:\n");
 	ccn_print(n, mod);
 	printf("m:\n");
@@ -62,6 +73,7 @@ end
 		printf("remainder:\n");
 		ccn_print(n, scratch);
 	}
+	*/
 	/*
 
 	for (int i = s2n_bits-1; i >= 0; i--)
