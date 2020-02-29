@@ -85,7 +85,7 @@ int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t *oid,
 	cc_size sig_units = ccn_nof_size(sig_len);
 	cc_size sig_bytes = ccn_sizeof_n(sig_units);
 
-	cc_unit *s = malloc(sig_bytes);
+	cc_unit *s = alloca(sig_bytes);
 	if (ccn_read_uint(sig_units, s, sig_len, sig))
 	{
 #if DEBUG
@@ -104,14 +104,15 @@ int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t *oid,
 		return 1;
 	}
 
-	cc_size m_size = ccn_sizeof_size(digest_len);
-	cc_unit *m = malloc(m_size);
-	ccn_read_uint(m_size, m, digest_len, digest);
+	cc_size digest_units = ccn_sizeof_size(digest_len);
+	cc_size digest_bytes = ccn_sizeof_n(digest_units);
+	cc_unit *m = alloca(digest_bytes);
+	ccn_read_uint(digest_units, m, digest_len, digest);
 
 	// m = s^e mod n
 	
 
-	struct cczp *zp = malloc(cczp_size(m_size));
+	struct cczp *zp = alloca(cczp_size(digest_units));
 	CCZP_N(zp) = ccn_nof_size(digest_len);
 	// maybe we should copy modulus into cczp_prime
 	cc_unit *zp_mod = (void *)zp + sizeof(struct cczp) /*+ ccn_sizeof_n(1)*/;
@@ -121,16 +122,10 @@ int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t *oid,
 	cczp_init(zp);
 	//void cczp_power(cczp_const_t zp, cc_unit *r, const cc_unit *m, const cc_unit *e);
 	
-	cc_unit *r = malloc(sig_bytes);
+	cc_unit *r = alloca(sig_bytes);
 	cczp_power(zp, r, m, exponent);
 
 	printf("we get here \n");
-
-	free(s);
-	free(zp);
-	free(m);
-
-
 }
 
 /*

@@ -12,6 +12,17 @@ void cczp_init(cczp_t zp)
 	zp.zp->mod_prime = &cczp_mod;
 }
 
+static cc_unit get_ith_bit(const cc_unit *s, cc_size i)
+{
+	const cc_size index = s[i / ccn_sizeof_n(1)];
+	const cc_size offset = i % ccn_sizeof_n(1);
+	const cc_size shift_size = (ccn_sizeof_n(1)*8)-offset-1;
+	cc_unit ret = s[index];
+	ret = ret << shift_size;
+	ret = ret >> shift_size;
+	return ret;
+}
+
 void cczp_mod(cczp_const_t zp, cc_unit *r, const cc_unit *s2n, cc_ws_t ws)
 {
 #if DEBUG
@@ -34,18 +45,23 @@ end
 	const cc_size n = cczp_n(zp);
 	const cc_size s2n_bits = ccn_bitlen(n*2, s2n);
 
-	cc_unit *q2n = malloc(ccn_sizeof_n(n)*2);
-	cc_unit *r2n = malloc(ccn_sizeof_n(n)*2);
-	memset(q2n, 0, ccn_sizeof_n(n)*2);
+	cc_unit *r2n = alloca(ccn_sizeof_n(n)*2);
+	cc_unit *mod2n = alloca(ccn_sizeof_n(n)*2);
 	memset(r2n, 0, ccn_sizeof_n(n)*2);
+	memset(mod2n, 0, ccn_sizeof_n(n)*2);
+	memcpy(mod2n, mod, ccn_sizeof_n(n));
 	for (int i = s2n_bits-1; i >= 0; i--)
 	{
 		ccn_shift_left(n*2, r2n, r2n, 1);
 		// Set least significant bit of r2n equal to bit i of s2n
+		r2n[0] |= get_ith_bit(r2n, i);
+		if (ccn_cmp(n*2, r2n, mod2n) >= 0)
+		{
+			ccn_sub(n*2, r2n, r2n, mod2n);
+		}
 	}
 
-	free(q2n);
-	free(r2n);
+	memcpy(r, r2n, ccn_sizeof_n(n));
 	/*
 	printf("prime:\n");
 	ccn_print(n, mod);
@@ -148,18 +164,16 @@ void cczp_power(cczp_const_t zp, cc_unit *r, const cc_unit *m,
 	
 	// Result is still one at this point
 	
-	cc_unit *base = malloc(n_sizeof*2);
+	cc_unit *base = alloca(n_sizeof*2);
 	memset(base, 0, n_sizeof*2);
 	memcpy(base, m, n_sizeof);
 
 	// Use a workspace size 2n+1 because ws.end is non-inclusive end pointer
-	cc_ws_t ws;
-	ws->start = malloc(n*2+1);
-	ws->end = ws->start+(n*2);
+	cc_ws ws;
+	ws.start = alloca(n*2+1);
+	ws.end = ws.start+(n*2);
 
 	// ccn integers are little endian, so it's OK that the 3rd parameter
 	// is length 2n (despite not needing it)
-	cczp_mod_prime(zp)(zp, base, base, ws);
-
-	free(ws->start);
+	cczp_mod_prime(zp)(zp, base, base, &ws);
 }
