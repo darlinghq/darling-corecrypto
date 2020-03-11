@@ -167,8 +167,19 @@ uint8_t *
 ccder_encode_constructed_tl(ccder_tag tag, const uint8_t *body_end,
                             const uint8_t *der, uint8_t *der_end);
 
+// NOTE(@facekapow):
+// the original Apple comment said:
+// > Encodes oid into der and returns
+// > der + ccder_sizeof_oid(oid).
+// but that must be a typo, right?
+// because if it *does* work the way Apple documented it,
+// then its behavior is different from all other `ccder_encode_*`
+// functions, which wouldn't make sense.
+// i'm going to make it work just like the other `ccder_encode_*`
+// functions, and return `der_end - ccder_sizeof_oid(oid)`
+
 /* Encodes oid into der and returns
- der + ccder_sizeof_oid(oid). */
+ der_end - ccder_sizeof_oid(oid). */
 CC_NONNULL_TU((1)) CC_NONNULL2
 uint8_t *ccder_encode_oid(ccoid_t oid, const uint8_t *der, uint8_t *der_end);
 
