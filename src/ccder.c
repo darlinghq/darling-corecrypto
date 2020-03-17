@@ -450,7 +450,7 @@ const uint8_t *ccder_decode_bitstring(const uint8_t **bit_string,
 	//++bit_start;
 	//--byte_len;
 
-	*bit_string = bit_string;
+	*bit_string = bit_start;
 	*bit_length = byte_len * 8 - bit_start[-1];
 
 	return bit_start + byte_len;
