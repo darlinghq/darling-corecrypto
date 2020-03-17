@@ -432,8 +432,9 @@ const uint8_t *ccder_decode_oid(ccoid_t *oidp,
 	const uint8_t* oid_start = ccder_decode_tl(CCDER_OBJECT_IDENTIFIER, &oid_len, der, der_end);
 	size_t total_len = (size_t)(oid_start - der) + oid_len;
 
-	uint8_t* copy = malloc(sizeof(uint8_t) * total_len);
+	uint8_t* copy = malloc(sizeof(uint8_t) * total_len + 1);
 	memcpy(copy, der, total_len);
+	copy[total_len] = '\0';
 
 	CCOID(*oidp) = copy;
 
