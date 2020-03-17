@@ -30,7 +30,20 @@ bool ccdigest_oid_equal(const struct ccdigest_info *di, ccoid_t oid) {
 
 typedef const struct ccdigest_info *(ccdigest_lookup)(ccoid_t oid);
 
-#include <stdarg.h>
-const struct ccdigest_info *ccdigest_oid_lookup(ccoid_t oid, ...);
+//#include <stdarg.h>
+
+// NOTE(@facekapow):
+// i'm not sure entirely sure what Apple was going for with the varargs,
+// especially since there was no documentation in the header
+//
+// my initial assumption was that it was used to try multiple possible OIDs
+// and return the digest info for the first one that was found. (un?)fortunately,
+// there's no indication of how to determine the length of the varargs
+// (NULL could be used as the last element)
+//
+// therefore, i'm just going to remove the varargs. besides, it's in a private header
+// which means that only our own implementation should use it, so we can modify it
+// however we want
+const struct ccdigest_info *ccdigest_oid_lookup(ccoid_t oid /*, ...*/);
 
 #endif /* _CORECRYPTO_CCDIGEST_PRIV_H_ */

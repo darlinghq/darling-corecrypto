@@ -18,8 +18,16 @@
  */
 
 #include <corecrypto/ccdigest.h>
+#include <corecrypto/ccdigest_priv.h>
 #include <string.h>
 #include <libkern/OSByteOrder.h>
+
+#include <corecrypto/ccmd2.h>
+#include <corecrypto/ccmd4.h>
+#include <corecrypto/ccmd5.h>
+#include <corecrypto/ccsha1.h>
+#include <corecrypto/ccsha2.h>
+#include <corecrypto/ccripemd.h>
 
 #ifdef __LITTLE_ENDIAN__
 static uint64_t swap64le(uint64_t v) { return v; }
@@ -201,3 +209,27 @@ int ccdigest_test_chunk_vector(const struct ccdigest_info* di, const struct ccdi
 	return ccdigest_test_chunk(di, v->len, v->message, v->digest, chunk);
 }
 
+
+const struct ccdigest_info* ccdigest_oid_lookup(ccoid_t oid)
+{
+	#define CC_OID_DI_PTR(x) &cc ## x ## _di
+	#define CC_OID_DI_FUNC(x) cc ## x ## _di()
+	#define CC_OID_CMP(x) if (ccdigest_oid_equal(x, oid)) { return x; }
+	#define CC_OID_CMP_PTR(x) CC_OID_CMP(CC_OID_DI_PTR(x))
+	#define CC_OID_CMP_FUNC(x) CC_OID_CMP(CC_OID_DI_FUNC(x))
+
+	CC_OID_CMP_PTR(md2);
+	CC_OID_CMP_PTR(md4);
+	CC_OID_CMP_FUNC(md5);
+	CC_OID_CMP_FUNC(sha1);
+	CC_OID_CMP_FUNC(sha224);
+	CC_OID_CMP_FUNC(sha256);
+	CC_OID_CMP_FUNC(sha384);
+	CC_OID_CMP_FUNC(sha512);
+	CC_OID_CMP_PTR(rmd128);
+	CC_OID_CMP_PTR(rmd160);
+	CC_OID_CMP_PTR(rmd256);
+	CC_OID_CMP_PTR(rmd320);
+
+	return NULL;
+};
