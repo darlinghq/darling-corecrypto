@@ -12,104 +12,104 @@ void cczp_init(cczp_t zp)
 	zp.zp->mod_prime = &cczp_mod;
 }
 
-static cc_unit get_ith_bit(const cc_unit *s, cc_size i)
-{
-	const cc_size index = s[i / ccn_sizeof_n(1)];
-	const cc_size offset = i % ccn_sizeof_n(1);
-	const cc_size shift_size = (ccn_sizeof_n(1)*8)-offset-1;
-	cc_unit ret = s[index];
-	ret = ret << shift_size;
-	ret = ret >> shift_size;
-	return ret;
-}
-
-void cczp_mod(cczp_const_t zp, cc_unit *r, const cc_unit *s2n, cc_ws_t ws)
-{
-#if DEBUG
-	printf("DARLING CRYPTO IMPL: %s\n", __PRETTY_FUNCTION__);
-#endif
+void cczp_mod(cczp_const_t zp, cc_unit* r, const cc_unit* a, cc_ws_t ws) {
+	// fast general purpose mod algorithm based on https://stackoverflow.com/a/980903
+	// the pseudocode is basically this:
 	/*
-if D = 0 then error(DivisionByZeroException) end
-Q := 0                  -- Initialize quotient and remainder to zero
-R := 0                     
-for i := n − 1 .. 0 do  -- Where n is number of bits in N
-  R := R << 1           -- Left-shift R by 1 bit
-  R(0) := N(i)          -- Set the least-significant bit of R equal to bit i of the numerator
-  if R ≥ D then
-    R := R − D
-    Q(i) := 1
-  end
-end
-*/
-	const cc_unit *mod = cczp_prime(zp);
-	const cc_size n = cczp_n(zp);
-	const cc_size s2n_bits = ccn_bitlen(n*2, s2n);
-
-	cc_unit *r2n = alloca(ccn_sizeof_n(n)*2);
-	cc_unit *mod2n = alloca(ccn_sizeof_n(n)*2);
-	memset(r2n, 0, ccn_sizeof_n(n)*2);
-	memset(mod2n, 0, ccn_sizeof_n(n)*2);
-	memcpy(mod2n, mod, ccn_sizeof_n(n));
-	for (int i = s2n_bits-1; i >= 0; i--)
-	{
-		ccn_shift_left(n*2, r2n, r2n, 1);
-		// Set least significant bit of r2n equal to bit i of s2n
-		r2n[0] |= get_ith_bit(r2n, i);
-		if (ccn_cmp(n*2, r2n, mod2n) >= 0)
-		{
-			ccn_sub(n*2, r2n, r2n, mod2n);
-		}
-	}
-
-	memcpy(r, r2n, ccn_sizeof_n(n));
-	/*
-	printf("prime:\n");
-	ccn_print(n, mod);
-	printf("m:\n");
-	ccn_print(n*2, s2n);
-
-	// Just to get correct answer, repeatedly add until we are greater.
-	if (ccn_cmp(n, mod, s2n) > 0)
-	{
-		memcpy(r, s2n, ccn_sizeof_n(n));
-		ccn_print(n, r);
-	} else {
-		// Repeatedly add mod until it's greater than s2n
-		memcpy(scratch, mod, ccn_sizeof_n(n));
-		while (ccn_cmp(n, mod, scratch) < 0) {
-			cc_unit overflow = ccn_add(n, scratch, mod, scratch);
-			if (overflow)
-			{
-				printf("something went wrong\n");
-				break;
+		function mod(a, b) {
+			let s = b
+			while (s <= a) {
+				s <<= 1
 			}
+			let r = a
+			while (r >= b) {
+				s >>= 1
+				if (s <= r) {
+					r -= s
+				}
+			}
+			return r
 		}
-		// The remainder is now scratch - s2n
-		ccn_sub(n, scratch, scratch, s2n);
-		printf("remainder:\n");
-		ccn_print(n, scratch);
-	}
 	*/
-	/*
+	// lol btw that is valid javascript
 
-	for (int i = s2n_bits-1; i >= 0; i--)
-	{
-		cc_unit leftmost_bit = ccn_shift_right(n, r, r, 1);
-		if (leftmost_bit != 0)
-		{
-			printf("%s: unexpected overflow\n", __PRETTY_FUNCTION__);
+	const cc_size n = cczp_n(zp);
+	const cc_unit* b = cczp_prime(zp);
+	const cc_size a_bits = ccn_bitlen(n * 2, a);
+	const cc_size b_bits = ccn_bitlen(n, b);
+
+	// the extra bit is to make sure we're able to make s greater than a
+	const cc_size extra_bits = a_bits + 1;
+	const cc_size extra_n = ccn_nof(extra_bits);
+	const cc_size extra_size = ccn_sizeof(extra_bits);
+
+	const cc_size size = ccn_sizeof_n(n);
+
+	cc_unit* s = NULL;
+	cc_unit* r_extra = NULL;
+	cc_unit* b_extra = NULL;
+
+	if (b_bits > a_bits) {
+		memcpy(r, a, ccn_sizeof_n(n));
+		return;
+	} else if (a_bits == b_bits) {
+		int cmp = ccn_cmp(n, a, b);
+		if (cmp < 0) {
+			memcpy(r, a, ccn_sizeof_n(n));
+			return;
+		} else if (cmp == 0) {
+			memset(r, 0, ccn_sizeof_n(n));
+			r[0] = 1;
+			return;
 		}
+	}
 
-		// get mask for nth bit
-		cc_unit mask = 1 << (i % CCN_UNIT_SIZE);
+	// at this point, the following is guaranteed to be true:
+	//   - a > b
+	//   - a_n >= b_n
+	//   - a_bits >= b_bits
 
-		r[0] |= (s2n[i/CCN_UNIT_SIZE] & mask) >> (i % CCN_UNIT_SIZE);
+	// now we copy everyone into bigger vectors to save cycles later on
+	// (because we won't have to calculate how many units are currently used)
 
-		if (ccn_cmp(n, r, mod) > 0)
-		{
-			ccn_sub(n, r, r, mod);
+	b_extra = malloc(extra_size);
+
+	memset(b_extra, 0, extra_size);
+	memcpy(b_extra, b, size);
+
+	s = malloc(extra_size);
+
+	// let s = b
+	memcpy(s, b_extra, extra_size);
+
+	// while (s <= a)
+	while (ccn_cmp(extra_n, s, a) <= 0) {
+		// s <<= 1
+		ccn_shift_left(extra_n, s, s, 1);
+	}
+
+	r_extra = malloc(extra_size);
+
+	// let r = a
+	memcpy(r_extra, a, extra_size);
+
+	// while (r <= b)
+	while (ccn_cmp(extra_n, r_extra, b_extra) >= 0) {
+		// s >>= 1
+		ccn_shift_right(extra_n, s, s, 1);
+		// if (s <= r)
+		if (ccn_cmp(extra_n, s, r_extra) <= 0) {
+			// r -= s
+			ccn_sub(extra_n, r_extra, r_extra, s);
 		}
-	}*/
+	}
+
+	// return r
+	memcpy(r, r_extra, size);
+
+	free(s);
+	free(r_extra);
+	free(b_extra);
 }
 
 /*
@@ -122,58 +122,92 @@ end
  * m:	Message, also size CCZP_N(zp)
  * e:	Exponent, also size CCZP_N(zp)
  */
-void cczp_power(cczp_const_t zp, cc_unit *r, const cc_unit *m,
-                const cc_unit *e)
-{
-#if DEBUG
-	printf("DARLING CRYPTO IMPL: %s\n", __PRETTY_FUNCTION__);
-#endif
+void cczp_power(cczp_const_t zp, cc_unit* r, const cc_unit* m, const cc_unit* e) {
+	/*
+		function modular_pow(base, exponent, modulus) is
+			if modulus = 1 then
+				return 0
+			Assert :: (modulus - 1) * (modulus - 1) does not overflow base
+			result := 1
+			base := base mod modulus
+			while exponent > 0 do
+				if (exponent mod 2 == 1) then
+					result := (result * base) mod modulus
+				exponent := exponent >> 1
+				base := (base * base) mod modulus
+			return result
+	*/
+	cc_unit* base = NULL;
+	cc_ws ws = { .start = NULL, .end = NULL };
+	cc_unit* e_copy = NULL;
+	cc_unit* intermediate = NULL;
 
-/*
- * function modular_pow(base, exponent, modulus) is
-    if modulus = 1 then
-        return 0
-    Assert :: (modulus - 1) * (modulus - 1) does not overflow base
-    result := 1
-    base := base mod modulus
-    while exponent > 0 do
-        if (exponent mod 2 == 1) then
-            result := (result * base) mod modulus
-        exponent := exponent >> 1
-        base := (base * base) mod modulus
-    return result
-*/
-	cc_size n = cczp_n(zp);
-	cc_size n_sizeof = ccn_sizeof_n(n);
+	cc_size full_n = cczp_n(zp);
+	cc_size full_size = ccn_sizeof_n(full_n);
 
-	// Initialize result
-	memset(r, 0, n_sizeof);
+	memset(r, 0, full_size);
 
-	// If mod equals 1, return zero
-	uint8_t one = 1;
-	ccn_read_uint(n, r, sizeof(int), &one);
-	if (ccn_cmp(n, r, cczp_prime(zp)) == 0)
-	{
-		// Return zero as result, x mod 1 is zero
-		one = 0;
-		ccn_read_uint(n, r, sizeof(uint8_t), &one);
+	const cc_unit* mod = cczp_prime(zp);
+	cc_size mod_n = ccn_n(full_n, mod);
+
+	// if modulus == 1, return 0
+	//
+	// we *should* copy 1 into a ccn and use
+	// ccn_cmp, but this is faster and ccn's are guaranteed
+	// to be little-endian so it works well
+	if (mod_n == 1 && mod[0] == 1)
 		return;
+
+	// allocated: n * 2
+	// max ever used: n
+	base = malloc(full_size * 2);
+	memset(base, 0, full_size * 2);
+	memcpy(base, m, full_size);
+
+	// result = 1
+	r[0] = 1;
+
+	// create a workspace
+	// use a workspace size 2n+1 because ws.end is non-inclusive end pointer
+	ws.start = malloc(ccn_sizeof_n(full_n * 2 + 1));
+	ws.end = ws.start + ccn_sizeof_n(full_n * 2);
+
+	// base = base mod modulus
+	cczp_mod_prime(zp)(zp, base, base, &ws);
+
+	e_copy = malloc(full_size);
+	memcpy(e_copy, e, full_size);
+
+	intermediate = malloc(full_size * 2);
+	memset(intermediate, 0, full_size * 2);
+
+	// while exponent > 0
+	while (ccn_n(full_n, e_copy) > 1 || e_copy[0] > 0) {
+		// if (exponent mod 2 == 1)
+		//
+		// `e mod 2` == `e & 1`
+		if (ccn_bit(e_copy, 0)) {
+			// result = (result * base) mod modulus
+			memset(intermediate, 0, full_size * 2);
+			ccn_mul(full_n, intermediate, r, base);
+			cczp_mod_prime(zp)(zp, r, intermediate, &ws);
+		}
+
+		// exponent = exponent >> 1
+		ccn_shift_right(full_n, e_copy, e_copy, 1);
+
+		// base = (base * base) mod modulus
+		memset(intermediate, 0, full_size * 2);
+		ccn_mul(full_n, intermediate, base, base);
+		cczp_mod_prime(zp)(zp, base, intermediate, &ws);
 	}
 
-	// TODO: Assert :: (modulus - 1) * (modulus - 1) does not overflow base
-	
-	// Result is still one at this point
-	
-	cc_unit *base = alloca(n_sizeof*2);
-	memset(base, 0, n_sizeof*2);
-	memcpy(base, m, n_sizeof);
-
-	// Use a workspace size 2n+1 because ws.end is non-inclusive end pointer
-	cc_ws ws;
-	ws.start = alloca(n*2+1);
-	ws.end = ws.start+(n*2);
-
-	// ccn integers are little endian, so it's OK that the 3rd parameter
-	// is length 2n (despite not needing it)
-	cczp_mod_prime(zp)(zp, base, base, &ws);
+	if (base)
+		free(base);
+	if (ws.start)
+		free(ws.start);
+	if (e_copy)
+		free(e_copy);
+	if (intermediate)
+		free(intermediate);
 }
