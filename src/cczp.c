@@ -72,12 +72,12 @@ void cczp_mod(cczp_const_t zp, cc_unit* r, const cc_unit* a, cc_ws_t ws) {
 	// now we copy everyone into bigger vectors to save cycles later on
 	// (because we won't have to calculate how many units are currently used)
 
-	b_extra = malloc(extra_size);
+	b_extra = __builtin_alloca(extra_size);
 
 	memset(b_extra, 0, extra_size);
 	memcpy(b_extra, b, size);
 
-	s = malloc(extra_size);
+	s = __builtin_alloca(extra_size);
 
 	// let s = b
 	memcpy(s, b_extra, extra_size);
@@ -88,7 +88,7 @@ void cczp_mod(cczp_const_t zp, cc_unit* r, const cc_unit* a, cc_ws_t ws) {
 		ccn_shift_left(extra_n, s, s, 1);
 	}
 
-	r_extra = malloc(extra_size);
+	r_extra = __builtin_alloca(extra_size);
 
 	// let r = a
 	memcpy(r_extra, a, extra_size);
@@ -106,10 +106,6 @@ void cczp_mod(cczp_const_t zp, cc_unit* r, const cc_unit* a, cc_ws_t ws) {
 
 	// return r
 	memcpy(r, r_extra, size);
-
-	free(s);
-	free(r_extra);
-	free(b_extra);
 }
 
 /*
@@ -160,7 +156,7 @@ void cczp_power(cczp_const_t zp, cc_unit* r, const cc_unit* m, const cc_unit* e)
 
 	// allocated: n * 2
 	// max ever used: n
-	base = malloc(full_size * 2);
+	base = __builtin_alloca(full_size * 2);
 	memset(base, 0, full_size * 2);
 	memcpy(base, m, full_size);
 
@@ -169,16 +165,16 @@ void cczp_power(cczp_const_t zp, cc_unit* r, const cc_unit* m, const cc_unit* e)
 
 	// create a workspace
 	// use a workspace size 2n+1 because ws.end is non-inclusive end pointer
-	ws.start = malloc(ccn_sizeof_n(full_n * 2 + 1));
+	ws.start = __builtin_alloca(ccn_sizeof_n(full_n * 2 + 1));
 	ws.end = ws.start + ccn_sizeof_n(full_n * 2);
 
 	// base = base mod modulus
 	cczp_mod_prime(zp)(zp, base, base, &ws);
 
-	e_copy = malloc(full_size);
+	e_copy = __builtin_alloca(full_size);
 	memcpy(e_copy, e, full_size);
 
-	intermediate = malloc(full_size * 2);
+	intermediate = __builtin_alloca(full_size * 2);
 	memset(intermediate, 0, full_size * 2);
 
 	// while exponent > 0
@@ -201,13 +197,4 @@ void cczp_power(cczp_const_t zp, cc_unit* r, const cc_unit* m, const cc_unit* e)
 		ccn_mul(full_n, intermediate, base, base);
 		cczp_mod_prime(zp)(zp, base, intermediate, &ws);
 	}
-
-	if (base)
-		free(base);
-	if (ws.start)
-		free(ws.start);
-	if (e_copy)
-		free(e_copy);
-	if (intermediate)
-		free(intermediate);
 }

@@ -114,7 +114,7 @@ cc_unit ccn_sub(cc_size n, cc_unit *r, const cc_unit *s, const cc_unit *t)
   // Must be done now because r could be the same as s or t
   cc_unit underflow = ccn_cmp(n, s, t) < 0;
   // Make t one's complement
-  cc_unit *t_copy = malloc(ccn_sizeof_n(n));
+  cc_unit *t_copy = __builtin_alloca(ccn_sizeof_n(n));
   for (cc_size i = 0; i < n; ++i)
     t_copy[i] = ~t[i];
 
@@ -124,7 +124,6 @@ cc_unit ccn_sub(cc_size n, cc_unit *r, const cc_unit *s, const cc_unit *t)
   // Perform addition between s and the two's complement of t
   ccn_add(n, r, s, t_copy);
 
-  free(t_copy);
   return underflow;
 }
 
@@ -266,11 +265,11 @@ void ccn_mul(cc_size n, cc_unit *r_2n, const cc_unit *s, const cc_unit *t) {
   // half_size_for_addition is used to allocate enough for addition
   // later when we do `hi + lo -> lo`
 
-  cc_unit* s_hi = malloc(half_size);
-  cc_unit* s_lo = malloc(half_size_for_addition);
+  cc_unit* s_hi = __builtin_alloca(half_size);
+  cc_unit* s_lo = __builtin_alloca(half_size_for_addition);
 
-  cc_unit* t_hi = malloc(half_size);
-  cc_unit* t_lo = malloc(half_size_for_addition);
+  cc_unit* t_hi = __builtin_alloca(half_size);
+  cc_unit* t_lo = __builtin_alloca(half_size_for_addition);
 
   memset(s_hi, 0, half_size);
   memset(s_lo, 0, half_size_for_addition);
@@ -287,9 +286,9 @@ void ccn_mul(cc_size n, cc_unit *r_2n, const cc_unit *s, const cc_unit *t) {
   // copy the rest into `t_hi`
   memcpy(t_hi, (uint8_t*)t + half_size, hi_half_size);
 
-  cc_unit* z0 = malloc(intermediate_mul_size);
-  cc_unit* z1 = malloc(intermediate_mul_size);
-  cc_unit* z2 = malloc(intermediate_mul_size);
+  cc_unit* z0 = __builtin_alloca(intermediate_mul_size);
+  cc_unit* z1 = __builtin_alloca(intermediate_mul_size);
+  cc_unit* z2 = __builtin_alloca(intermediate_mul_size);
 
   memset(z0, 0, intermediate_mul_size);
   memset(z1, 0, intermediate_mul_size);
@@ -314,8 +313,8 @@ void ccn_mul(cc_size n, cc_unit *r_2n, const cc_unit *s, const cc_unit *t) {
   // z2 = (s_lo + s_hi) * (t_lo + t_hi)
   ccn_mul(half_n + 1, z2, s_lo, t_lo);
 
-  cc_unit* t0 = malloc(result_size);
-  cc_unit* t1 = malloc(result_size);
+  cc_unit* t0 = __builtin_alloca(result_size);
+  cc_unit* t1 = __builtin_alloca(result_size);
 
   memset(t0, 0, result_size);
   memset(t1, 0, result_size);
@@ -371,17 +370,6 @@ void ccn_mul(cc_size n, cc_unit *r_2n, const cc_unit *s, const cc_unit *t) {
   ccn_set(intermediate_mul_n, r_2n, z0);
   ccn_add(result_n, r_2n, r_2n, t0);
   ccn_add(result_n, r_2n, r_2n, t1);
-
-  // yeah, i know. **WAY** too many allocations
-  free(s_hi);
-  free(s_lo);
-  free(t_hi);
-  free(t_lo);
-  free(z0);
-  free(z1);
-  free(z2);
-  free(t0);
-  free(t1);
 }
 
 void ccn_mul_ws(cc_size count, cc_unit *r, const cc_unit *s, const cc_unit *t, cc_ws_t ws) {
@@ -517,9 +505,9 @@ int ccn_div_euclid(cc_size nq, cc_unit *q, cc_size nr, cc_unit *r, cc_size na, c
 		nr = nd;
 
 	if (nq < na)
-		goto fail;
+		return -1;
 	if (nr < nd)
-		goto fail;
+		return -1;
 
 	// if the divisor is greater, we cannot divide!
 	if (ccn_cmpn(na, a, nd, d) < 0) {
@@ -533,7 +521,7 @@ int ccn_div_euclid(cc_size nq, cc_unit *q, cc_size nr, cc_unit *r, cc_size na, c
 		return 0;
 	}
 
-	tmp_remainder = malloc(ccn_sizeof_n(na));
+	tmp_remainder = __builtin_alloca(ccn_sizeof_n(na));
 
 	ccn_set(na, tmp_remainder, a);
 
@@ -553,15 +541,7 @@ int ccn_div_euclid(cc_size nq, cc_unit *q, cc_size nr, cc_unit *r, cc_size na, c
 	if (r)
 		ccn_set(nr, r, tmp_remainder);
 
-	if (tmp_remainder)
-		free(tmp_remainder);
-
 	return 0;
-
-fail:
-	if (tmp_remainder)
-		free(tmp_remainder);
-	return -1;
 }
 
 int ccn_div_use_recip(cc_size nq, cc_unit *q, cc_size nr, cc_unit *r, cc_size na, const cc_unit *a, cc_size nd, const cc_unit *d, const cc_unit *recip_d) {

@@ -432,11 +432,7 @@ const uint8_t *ccder_decode_oid(ccoid_t *oidp,
 	const uint8_t* oid_start = ccder_decode_tl(CCDER_OBJECT_IDENTIFIER, &oid_len, der, der_end);
 	size_t total_len = (size_t)(oid_start - der) + oid_len;
 
-	uint8_t* copy = malloc(sizeof(uint8_t) * total_len + 1);
-	memcpy(copy, der, total_len);
-	copy[total_len] = '\0';
-
-	CCOID(*oidp) = copy;
+	CCOID(*oidp) = der;
 
 	return oid_start + oid_len;
 }
@@ -447,13 +443,14 @@ const uint8_t *ccder_decode_bitstring(const uint8_t **bit_string,
 	size_t byte_len = 0;
 	const uint8_t* bit_start = ccder_decode_tl(CCDER_BIT_STRING, &byte_len, der, der_end);
 
-	++bit_start;
-	--byte_len;
+	// NOTE(@facekapow):
+	// i'm not sure if Apple's API meant to include the *entire* bitstring including the leading
+	// byte (which denotes the number of empty/padding bits at the end), but i'm going to assume
+	// that it does. uncomment this if it's not supposed to include that byte
+	//++bit_start;
+	//--byte_len;
 
-	uint8_t* copy = malloc(sizeof(uint8_t) * byte_len);
-	memcpy(copy, bit_start, byte_len);
-	*bit_string = copy;
-
+	*bit_string = bit_string;
 	*bit_length = byte_len * 8 - bit_start[-1];
 
 	return bit_start + byte_len;

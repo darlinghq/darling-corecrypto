@@ -101,7 +101,7 @@ int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t* oid, size_t digest
 	cc_size sig_units = ccn_nof_size(sig_len);
 	cc_size sig_bytes = ccn_sizeof_n(sig_units);
 
-	s = malloc(sig_bytes);
+	s = __builtin_alloca(sig_bytes);
 	memset(s, 0, sig_bytes);
 	if (ccn_read_uint(sig_units, s, sig_len, sig)) {
 #if DEBUG
@@ -119,17 +119,17 @@ int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t* oid, size_t digest
 	}
 
 	// copy the modulus into it's own zp structure
-	zp = malloc(cczp_size(sig_bytes));
+	zp = __builtin_alloca(cczp_size(sig_bytes));
 	CCZP_N(zp) = sig_units;
 	cczp_init(zp);
 	memcpy(CCZP_PRIME(zp), modulus, ccn_sizeof_n(CCZP_N(zp)));
 
-	m = malloc(sig_bytes);
+	m = __builtin_alloca(sig_bytes);
 	// m = s^e mod n
 	cczp_power(zp, m, s, exponent);
 
 	// convert `m` into an octet stream in `em`
-	em = malloc(sig_bytes);
+	em = __builtin_alloca(sig_bytes);
 	memset(em, 0, sig_bytes);
 	ccn_write_uint(sig_units, m, sig_bytes, em);
 
@@ -140,7 +140,7 @@ int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t* oid, size_t digest
 
 	// encode the digest into an EMSA-PKCS#1 v1.5 encoded message
 	// to compare with `em`
-	em_prime = malloc(sig_bytes);
+	em_prime = __builtin_alloca(sig_bytes);
 	memset(em_prime, 0, sig_bytes);
 	if (ccrsa_emsa_pkcs1v15_encode(sig_bytes, em_prime, digest_len, digest, oid)) {
 #if DEBUG
@@ -160,29 +160,9 @@ int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t* oid, size_t digest
 #endif
 	}
 
-	if (s)
-		free(s);
-	if (zp)
-		free(zp);
-	if (m)
-		free(m);
-	if (em)
-		free(em);
-	if (em_prime)
-		free(em_prime);
 	return 0;
 
 fail:
-	if (s)
-		free(s);
-	if (zp)
-		free(zp);
-	if (m)
-		free(m);
-	if (em)
-		free(em);
-	if (em_prime)
-		free(em_prime);
 #if DEBUG
 	printf("%s: failed\n", __PRETTY_FUNCTION__);
 #endif
