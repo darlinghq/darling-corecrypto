@@ -32,8 +32,20 @@ cc_unit ccn_shift_right(cc_size n, cc_unit* r, const cc_unit* s, size_t k) {
 
   return carry;
 }
-void ccn_shift_right_multi(cc_size n, cc_unit *r, const cc_unit *s, size_t k) {
-  printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+void ccn_shift_right_multi(cc_size n, cc_unit* r, const cc_unit* s, size_t k) {
+	cc_size discarded_units = k / CCN_UNIT_BITS;
+	k -= discarded_units * CCN_UNIT_BITS;
+	cc_unit carry = 0;
+	cc_unit temp;
+
+	for (cc_size i = n; i > discarded_units; --i) {
+		temp = s[i - 1];
+		r[(i - 1) - discarded_units] = temp >> k;
+		r[(i - 1) - discarded_units] |= carry;
+		if (i > n - discarded_units)
+			r[i - 1] = 0;
+		carry = temp << (CCN_UNIT_BITS - k);
+	}
 }
 
 /*
@@ -55,8 +67,20 @@ cc_unit ccn_shift_left(cc_size n, cc_unit* r, const cc_unit* s, size_t k) {
   return carry;
 }
 
-void ccn_shift_left_multi(cc_size n, cc_unit *r, const cc_unit *s, size_t k) {
-  printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+void ccn_shift_left_multi(cc_size n, cc_unit* r, const cc_unit* s, size_t k) {
+	cc_size discarded_units = k / CCN_UNIT_BITS;
+	k -= discarded_units * CCN_UNIT_BITS;
+	cc_unit carry = 0;
+	cc_unit temp;
+
+	for (cc_size i = 0; i < n - discarded_units; ++i) {
+		temp = s[i];
+		r[i + discarded_units] = temp << k;
+		r[i + discarded_units] |= carry;
+		if (i < discarded_units)
+			r[i] = 0;
+		carry = temp >> (CCN_UNIT_BITS - k);
+	}
 }
 
 size_t ccn_bitlen(cc_size n, const cc_unit *s) {
@@ -494,8 +518,6 @@ int ccn_div_euclid(cc_size nq, cc_unit *q, cc_size nr, cc_unit *r, cc_size na, c
 	// NOTE(@facekapow):
 	// i actually haven't tested this implementation
 
-	cc_unit* tmp_remainder = NULL;
-
 	na = ccn_n(na, a);
 	nd = ccn_n(nd, d);
 
@@ -509,8 +531,20 @@ int ccn_div_euclid(cc_size nq, cc_unit *q, cc_size nr, cc_unit *r, cc_size na, c
 	if (nr < nd)
 		return -1;
 
+	if (na < nd) {
+		if (r)
+			ccn_set(na, r, a);
+		if (q)
+			ccn_zero(nq, q);
+		return 0;
+	}
+
+	cc_unit* tmp_d = __builtin_alloca(ccn_sizeof_n(na));
+	memset(tmp_d, 0, ccn_sizeof_n(na));
+	ccn_set(nd, tmp_d, d);
+
 	// if the divisor is greater, we cannot divide!
-	if (ccn_cmpn(na, a, nd, d) < 0) {
+	if (ccn_cmp(na, a, tmp_d) < 0) {
 		// note that here it is ok to copy a into r
 		// even though r's size depends on that of d
 		// because we've determined that d is bigger than a
@@ -521,17 +555,15 @@ int ccn_div_euclid(cc_size nq, cc_unit *q, cc_size nr, cc_unit *r, cc_size na, c
 		return 0;
 	}
 
-	tmp_remainder = __builtin_alloca(ccn_sizeof_n(na));
+	cc_unit* tmp_remainder = __builtin_alloca(ccn_sizeof_n(na));
 
 	ccn_set(na, tmp_remainder, a);
-
-	cc_size tmp_remainder_curr_n = 0;
 
 	// we do ccn_n on every loop because ccn_cmpn looks at both n's and says one value is greater
 	// than the other just based on the n's. therefore, if we want to check for real whether the
 	// remainder is greater than the divisor, we need to check how many n's are actually used
-	while (ccn_cmpn(tmp_remainder_curr_n = ccn_n(na, tmp_remainder), tmp_remainder, nd, d) >= 0) {
-		ccn_subn(tmp_remainder_curr_n, tmp_remainder, tmp_remainder, nd, d);
+	while (ccn_cmp(na, tmp_remainder, tmp_d) >= 0) {
+		ccn_sub(na, tmp_remainder, tmp_remainder, tmp_d);
 		if (q)
 			ccn_add1(nq, q, q, 1);
 	}
