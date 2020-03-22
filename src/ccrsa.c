@@ -4,6 +4,18 @@
 #include <corecrypto/ccrsa_priv.h>
 #include <corecrypto/cc_debug.h>
 
+CC_INLINE
+void cc_print_be(const char* label, size_t size, const uint8_t* array) {
+	printf("%s: ", label);
+	for (size_t i = size; i > 0; --i)
+		printf("%02x", array[i - 1]);
+};
+CC_INLINE
+void cc_println_be(const char* label, size_t count, const uint8_t* array) {
+	cc_print_be(label, count, array);
+	putchar('\n');
+};
+
 // Reference used is https://tools.ietf.org/html/rfc8017
 
 int ccrsa_import_pub(ccrsa_pub_ctx_t key, size_t inlen, const uint8_t *der)
@@ -49,51 +61,50 @@ const uint8_t *ccder_decode_rsa_priv(const ccrsa_full_ctx_t key, const uint8_t *
  * valid is set to false if there is an invalid signature.
  */
 int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t* oid, size_t digest_len, const uint8_t* digest, size_t sig_len, const uint8_t* sig, bool* valid) {
-#if DEBUG
-	printf("DARLING CRYPTO IMPL: %s\n", __PRETTY_FUNCTION__);
-
-	cc_println("key", ccrsa_pub_ctx_size(ccn_sizeof_n(ccrsa_ctx_n(key))), (const uint8_t*)ccrsa_ctx_zm(key).u);
-	cc_println("oid", strlen((const char*)oid), oid);
-	printf("digest_len: %zu\n", digest_len);
-	cc_println("digest", digest_len, digest);
-	printf("sig_len: %zu\n", sig_len);
-	cc_println("sig", sig_len, sig);
-#endif
-
-	*valid = false;
+	#if DEBUG
+		cc_println("key", ccrsa_pub_ctx_size(ccn_sizeof_n(ccrsa_ctx_n(key))), (const uint8_t*)ccrsa_ctx_zm(key).u);
+		cc_println("oid", strlen((const char*)oid), oid);
+		printf("digest_len: %zu\n", digest_len);
+		cc_println("digest", digest_len, digest);
+		printf("sig_len: %zu\n", sig_len);
+		cc_println("sig (big endian)", sig_len, sig);
+	#endif
 
 	*valid = false;
 
 	cc_unit* s = NULL;
-	struct cczp* zp = NULL;
 	cc_unit* m = NULL;
 	uint8_t* em = NULL;
 	uint8_t* em_prime = NULL;
 
 	cc_size mod_size = ccrsa_ctx_n(key);
-	cc_unit* modulus = ccrsa_ctx_m(key);
+	cczp_t zp = ccrsa_ctx_zm(key);
+	const cc_unit* modulus = cczp_prime((cczp_const_short_t)zp);
+	const cc_unit* reciprocal = cczp_recip(zp);
 	cc_unit* exponent = ccrsa_ctx_e(key);
 
 	// mod_size is how many units are allocated for the modulus
 	// mod_len is how many bytes (*bytes*, not units) are in use
-	cc_size mod_bits = ccn_bitlen(mod_size, modulus);
-	cc_size mod_len = (mod_bits + 7) / 8;
-	mod_size = ccn_nof(mod_bits);
+	cc_size mod_used_bits = ccn_bitlen(mod_size, modulus);
+	cc_size mod_len = ccn_sizeof(mod_used_bits);
+	cc_size mod_byte_size = ccn_sizeof_n(mod_size);
 
 	cc_size sig_bits = ccn_bitsof_size(sig_len);
 
-#if DEBUG
-	printf("n of mod: %zu\n", mod_size);
-	printf("mod_len: %zu\n", mod_len);
-	cc_println("mod", ccn_sizeof_n(mod_size), (const uint8_t*)modulus);
-	cc_println("e", ccn_sizeof_n(mod_size), (const uint8_t*)exponent);
-#endif
+	#if DEBUG
+		printf("n of mod: %zu\n", mod_size);
+		printf("mod_len: %zu\n", mod_len);
+		cc_println("mod (little endian)", mod_byte_size, (const uint8_t*)modulus);
+		cc_println("exp (little endian)", mod_byte_size, (const uint8_t*)exponent);
+		cc_println("mod_recip (little endian)", ccn_sizeof_n(mod_size + 1), (const uint8_t*)reciprocal);
+		cc_println_be("mod (big endian)", mod_byte_size, (const uint8_t*)modulus);
+		cc_println_be("exp (big endian)", mod_byte_size, (const uint8_t*)exponent);
+		cc_println_be("mod_recip (big endian)", ccn_sizeof_n(mod_size + 1), (const uint8_t*)reciprocal);
+	#endif
 
 	// number of bits in signature should equal the number of bits in modulus
-	if (sig_bits != mod_bits) {
-#if DEBUG
-		printf("%s: sig_bits (%zu) != mod_bits (%zu)\n", __PRETTY_FUNCTION__, sig_bits, mod_bits);
-#endif
+	if (sig_bits != mod_used_bits) {
+		printf("%s: sig_bits (%zu) != mod_bits (%zu)\n", __PRETTY_FUNCTION__, sig_bits, mod_used_bits);
 		goto fail;
 	}
 
@@ -101,30 +112,29 @@ int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t* oid, size_t digest
 	cc_size sig_units = ccn_nof_size(sig_len);
 	cc_size sig_bytes = ccn_sizeof_n(sig_units);
 
-	s = __builtin_alloca(sig_bytes);
-	memset(s, 0, sig_bytes);
+	// we allocate according to the size of the modulus
+	// because the `n` that will be used in the `cczp_power` function
+	// is the one set in the ZP structure. we need to make sure
+	// we have the same number of units allocated, 
+	s = __builtin_alloca(mod_byte_size);
+	memset(s, 0, mod_byte_size);
 	if (ccn_read_uint(sig_units, s, sig_len, sig)) {
-#if DEBUG
-		printf("%s: failed to read signature\n", __PRETTY_FUNCTION__);
-#endif
+		#if DEBUG
+			printf("%s: failed to read signature\n", __PRETTY_FUNCTION__);
+		#endif
 		goto fail;
 	}
 
 	// Verify that s is in the range of `0` and `modulus - 1`
 	if (ccn_cmp(sig_units, s, modulus) >= 0 || ccn_bitlen(sig_units, s) == 0) {
-#if DEBUG
-		printf("%s: s not in range of [0, modulus)\n", __PRETTY_FUNCTION__);
-#endif
+		#if DEBUG
+			printf("%s: s not in range of [0, modulus)\n", __PRETTY_FUNCTION__);
+		#endif
 		goto fail;
 	}
 
-	// copy the modulus into it's own zp structure
-	zp = __builtin_alloca(cczp_size(sig_bytes));
-	CCZP_N(zp) = sig_units;
-	cczp_init(zp);
-	memcpy(CCZP_PRIME(zp), modulus, ccn_sizeof_n(CCZP_N(zp)));
-
-	m = __builtin_alloca(sig_bytes);
+	m = __builtin_alloca(mod_byte_size);
+	memset(m, 0, mod_byte_size);
 	// m = s^e mod n
 	cczp_power(zp, m, s, exponent);
 
@@ -133,54 +143,63 @@ int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t* oid, size_t digest
 	memset(em, 0, sig_bytes);
 	ccn_write_uint(sig_units, m, sig_bytes, em);
 
-#if DEBUG
-	cc_println("m", sig_bytes, (const uint8_t*)m);
-	cc_println("em", sig_bytes, (const uint8_t*)em);
-#endif
+	#if DEBUG
+		cc_println("m (little endian)", sig_bytes, (const uint8_t*)m);
+		cc_println("em (big endian)", sig_bytes, (const uint8_t*)em);
+	#endif
 
 	// encode the digest into an EMSA-PKCS#1 v1.5 encoded message
 	// to compare with `em`
 	em_prime = __builtin_alloca(sig_bytes);
 	memset(em_prime, 0, sig_bytes);
 	if (ccrsa_emsa_pkcs1v15_encode(sig_bytes, em_prime, digest_len, digest, oid)) {
-#if DEBUG
-		printf("%s: failed to encode with EMSA-PKCS#1 v1.5\n", __PRETTY_FUNCTION__);
-#endif
+		#if DEBUG
+			printf("%s: failed to encode with EMSA-PKCS#1 v1.5\n", __PRETTY_FUNCTION__);
+		#endif
 		goto fail;
 	}
 
-#if DEBUG
-	cc_println("em_prime", sig_bytes, em_prime);
-#endif
+	#if DEBUG
+		cc_println("em_prime (big endian)", sig_bytes, em_prime);
+	#endif
 
 	*valid = !memcmp(em, em_prime, sig_bytes);
 	if (!*valid) {
-#if DEBUG
-		printf("%s: em != em_prime\n", __PRETTY_FUNCTION__);
-#endif
+		#if DEBUG
+			printf("%s: em != em_prime\n", __PRETTY_FUNCTION__);
+		#endif
 	}
 
 	return 0;
 
 fail:
-#if DEBUG
-	printf("%s: failed\n", __PRETTY_FUNCTION__);
-#endif
+	#if DEBUG
+		printf("%s: failed\n", __PRETTY_FUNCTION__);
+	#endif
 	return 1;
 }
 
 /*
  * Take modulus and exponent and put them next to each other in the public key
  */
-void ccrsa_init_pub(ccrsa_pub_ctx_t key, const cc_unit *modulus,
-                    const cc_unit *e)
-{
-#if DEBUG
-	printf("DARLING CRYPTO IMPL: %s\n", __PRETTY_FUNCTION__);
-#endif
-	cc_size mod_size = ccrsa_ctx_n(key);
-	memcpy(ccrsa_ctx_m(key), modulus, ccn_sizeof_n(ccrsa_ctx_n(key)));
-	memcpy(ccrsa_ctx_e(key), e, ccn_sizeof_n(ccrsa_ctx_n(key)));
+void ccrsa_init_pub(ccrsa_pub_ctx_t key, const cc_unit* modulus, const cc_unit* e) {
+	#if DEBUG
+		printf("DARLING CRYPTO IMPL: %s\n", __PRETTY_FUNCTION__);
+	#endif
+
+	const cc_size mod_n = ccrsa_ctx_n(key);
+	cczp_t zp = ccrsa_ctx_zm(key);
+
+	// copy the modulus
+	memcpy(ccrsa_ctx_m(key), modulus, ccn_sizeof_n(mod_n));
+
+	// copy the exponent
+	memcpy(ccrsa_ctx_e(key), e, ccn_sizeof_n(mod_n));
+
+	// initialize the ZP structure
+	// this will attach an implementation of `mod_prime` to the ZP structure
+	// and also calculate the reciprocal of the modulus and place it in the ZP structure
+	cczp_init(zp);
 }
 
 int
