@@ -67,9 +67,9 @@ extern int printf(const char *format, ...) __printflike(1,2);
 /* Print a byte array of arbitrary size */
 CC_INLINE
 void cc_print(const char* label, size_t count, const uint8_t* array) {
-	printf("%s:", label);
+	printf("%s: ", label);
 	for (size_t i = 0; i < count; ++i)
-		printf(" %02x", array[i]);
+		printf("%02x", array[i]);
 };
 
 CC_INLINE
