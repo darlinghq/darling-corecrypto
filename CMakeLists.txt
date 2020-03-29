@@ -53,6 +53,10 @@ set(corecrypto_sources
 		src/ccansikdf.c
 		src/ccecies.c
 		src/ccrng_pbkdf2.c
+		src/ccec_projective_point.c
+		src/ccec_points.c
+		src/ccn_extra.c
+		src/cczp_extra.c
 )
 
 set(DYLIB_INSTALL_NAME "/usr/lib/system/libcorecrypto.dylib")
