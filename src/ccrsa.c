@@ -4,18 +4,6 @@
 #include <corecrypto/ccrsa_priv.h>
 #include <corecrypto/cc_debug.h>
 
-CC_INLINE
-void cc_print_be(const char* label, size_t size, const uint8_t* array) {
-	printf("%s: ", label);
-	for (size_t i = size; i > 0; --i)
-		printf("%02x", array[i - 1]);
-};
-CC_INLINE
-void cc_println_be(const char* label, size_t count, const uint8_t* array) {
-	cc_print_be(label, count, array);
-	putchar('\n');
-};
-
 // Reference used is https://tools.ietf.org/html/rfc8017
 
 int ccrsa_import_pub(ccrsa_pub_ctx_t key, size_t inlen, const uint8_t *der)
