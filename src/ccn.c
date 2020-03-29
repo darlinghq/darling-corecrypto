@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <corecrypto/ccrng.h>
 
 cc_size ccn_n(cc_size n, const cc_unit *s) {
     // Little-endian, so the leading 0 units go at the end.
@@ -163,22 +164,22 @@ cc_unit ccn_sub1(cc_size n, cc_unit *r, const cc_unit *s, cc_unit v) {
 /*
  * r = s + t
  */
-cc_unit ccn_add(cc_size n, cc_unit *r, const cc_unit *s, const cc_unit *t) {
-  cc_unit carry = 0;
-  for (cc_size i = 0; i < n; ++i) {
-    cc_unit s_current = s[i];
-    cc_unit t_current = t[i];
-    cc_unit sum = s_current + t_current + carry;
-    r[i] = sum;
-    // Overflow check
-    if (s_current > sum || t_current > sum) {
-      carry = 1;
-    } else {
-      carry = 0;
-    }
-  }
-  return carry;
-}
+cc_unit ccn_add(cc_size n, cc_unit* r, const cc_unit* s, const cc_unit* t) {
+	cc_unit carry = 0;
+	for (cc_size i = 0; i < n; ++i) {
+		cc_unit s_current = s[i];
+		cc_unit t_current = t[i];
+		cc_unit partial_sum = s_current + t_current;
+		r[i] = partial_sum + carry;
+		// Overflow check
+		if (s_current > partial_sum || t_current > partial_sum || s_current > r[i] || t_current > r[i]) {
+			carry = 1;
+		} else {
+			carry = 0;
+		}
+	}
+	return carry;
+};
 
 cc_unit ccn_add1(cc_size n, cc_unit *r, const cc_unit *s, cc_unit v)
 {
@@ -507,12 +508,177 @@ void ccn_lprint(cc_size n, const char *label, const cc_unit *s) {
 }
 
 int ccn_random_bits(cc_size nbits, cc_unit *r, struct ccrng_state *rng) {
-  printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
-}
+	const cc_size n = ccn_nof(nbits);
+	const cc_size size = ccn_sizeof_n(n);
 
-void ccn_make_recip(cc_size nd, cc_unit *recip, const cc_unit *d) {
-  printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
-}
+	if (ccrng_generate(rng, size, r))
+		return -1;
+
+	const cc_size final_unit_bits = nbits - ((nbits / CCN_UNIT_BITS) * CCN_UNIT_BITS);
+
+	if (final_unit_bits != 0) {
+		const cc_size shift = CCN_UNIT_BITS - final_unit_bits;
+		const cc_size mask = (CCN_UNIT_MASK << shift) >> shift;
+		r[n - 1] &= mask;
+	}
+
+	return 0;
+};
+
+void ccn_make_recip(cc_size nd, cc_unit* result, const cc_unit* d) {
+	cc_size n = ccn_n(nd, d);
+
+	// we're using Knuth's Algorithm D: division of nonnegative integers
+	// (see "The Art of Computer Programming (vol. 2)", section 4.3.1)
+	// we're operating in base 2^64
+
+	// our dividend
+	// equal to `(2^64)^(2 * n)`
+	// that is: our base (2^64) to the power of `2 * n`
+	cc_unit* pow = __builtin_alloca(ccn_sizeof_n(2 * n + 2));
+	memset(pow, 0, ccn_sizeof_n(2 * n + 2));
+	pow[2 * n] = 1;
+
+	// our quotient
+	// the reciprocal of our modulus, in base 2^64
+	cc_unit* recip = __builtin_alloca(ccn_sizeof_n(n + 1));
+	memset(recip, 0, ccn_sizeof_n(n + 1));
+
+	// our divisor
+	cc_unit* d_copy = __builtin_alloca(ccn_sizeof_n(n + 1));
+	d_copy[n] = 0;
+	memcpy(d_copy, d, ccn_sizeof_n(n));
+
+	// 1. normalize
+	// make sure that the most significant digit of the divisor
+	// is greater than half of the base (greater than `2^63` in this case)
+	//
+	// for us, that means "eliminate leading zeros", which we do by
+	// counting them and shifting all the bits left by that amount
+	cc_size shift = __builtin_clzl(d_copy[n - 1]);
+	// the `ccn_shift_*` functions currently have a bug where they will not
+	// work correctly when given a 0 as the shift count
+	// TODO: fix this
+	if (shift > 0) {
+		ccn_shift_left_multi(n + 1, d_copy, d_copy, shift);
+		ccn_shift_left_multi(n + 1, pow, pow, shift);
+	}
+	
+	// note that after normalization, the divisor still has the same number of digits as before
+	// but the dividend has a new most significant digit
+	//
+	// thus, the most significant digit of the divisor is at `n - 1`, but the most significant digit
+	// of the dividend is at `(2 * n) + 1`
+	//
+	// however, for the purposes of the loop counter computation later on,
+	// we use the original number of digits for both
+
+	// the base we're using
+	// since cc_units have architecture dependent sizes, we use the defined bit mask (which
+	// is equal to the base minus 1), and we add 1
+	cc_dunit base = CCN_UNIT_MASK;
+	base += 1;
+
+	// 2. initialize `j`
+	// set `j` equal to the difference in the number of digits between the divisor
+	// and the dividend
+	//
+	// this translates to `(2 * n + 1) - n`, which is just `n + 1`
+	// ...plus an extra 1 because we're using an unsigned counter
+	//
+	// this step also includes:
+	// 7. loop on `j`
+	for (cc_size i = n + 2; i > 0; --i) {
+		cc_size j = i - 1;
+		cc_unit* pow_pointer = pow + j;
+
+		// 3. calculate q_hat
+		// set q_hat equal to the two most significant digits of the dividend
+		// divided by the most significant digit of the divisor
+		//
+		// also set r_hat equal to the remainder of this operation
+		cc_dunit two_digits = ((cc_dunit)pow_pointer[n] << CCN_UNIT_BITS) | (cc_dunit)pow_pointer[n - 1];
+		cc_dunit q_hat = two_digits / d_copy[n - 1];
+		cc_dunit r_hat = two_digits % d_copy[n - 1];
+
+		// (still part of step 3)
+		while (true) {
+			// if q_hat is greater than or equal to the base
+			// OR
+			// if q_hat times the second most significant digit of the divisor is
+			// greater than r_hat times the base plus the second third most significant digit of the dividend
+			// then...
+			if (q_hat >= base || (q_hat * d_copy[n - 2]) > ((r_hat << CCN_UNIT_BITS) | pow_pointer[n - 2])) {
+				// ...decrease q_hat by one
+				--q_hat;
+				// and add the most significant digit of the divisor to r_hat
+				r_hat += d_copy[n - 1];
+				// continue performing this test while r_hat is less than the base
+				if (r_hat < base)
+					continue;
+			}
+			break;
+		}
+
+		// btw, we use variable length arrays here because unlike
+		// alloca-allocated memory, they're freed at the end of their
+		// scope, and we might loop *a lot* (since we're dependent on
+		// the unit count, which we don't control)
+
+		// we only need `n + 1` units because at this point,
+		// q_hat is a single unit number, not double unit (and we're only
+		// using `n` units of `d_copy`)
+		//
+		// however, we need to allocate all the units necessary
+		// because `ccn_mul` does a zero for the full 2n
+		cc_unit result[2 * n];
+		memset(result, 0, ccn_sizeof_n(2 * n));
+
+		cc_unit q_hat_ccn[n];
+		memset(q_hat_ccn, 0, ccn_sizeof_n(n));
+		q_hat_ccn[0] = (cc_unit)(q_hat & CCN_UNIT_MASK);
+
+		// 4. multiply and subtract
+		// subtract `q_hat * divisor` from the t
+
+		// `q_hat * divisor`
+		ccn_mul(n, result, q_hat_ccn, d_copy);
+
+		// note that in the following syntax, the end is exclusive
+		// `dividend[j:j + n + 1] -= q_hat * divisor`
+		// (a.k.a. subtract `q_hat * divisor` from the digits of the dividend
+		// in the range from `j` up to but not including `j + n + 1`)
+		//
+		// we've already set up pow_pointer to point to `pow + j`
+		bool underflow = ccn_sub(n + 1, pow_pointer, pow_pointer, result);
+
+		// 5. test remainder
+
+		// set the j-th digit of the quotient equal to q_hat
+		recip[j] = q_hat;
+
+		// if the result of step 4 was negative
+		// then...
+		if (underflow) {
+			// ...decrease the j-th digit of the quotient by 1
+			--recip[j];
+
+			// and add one copy of the divisor into the range of digits
+			// of the dividend that we subtracted from
+			cc_unit tmp[n + 1];
+			tmp[n] = 0;
+			ccn_set(n, tmp, d_copy);
+			ccn_add(n + 1, pow_pointer, pow_pointer, tmp);
+		}
+	}
+
+	// step 8 *would* be "unnormalize", but we don't need to do that because we
+	// don't need the remainder for our purposes here
+
+	memset(result, 0, ccn_sizeof_n(nd + 1));
+
+	memcpy(result, recip, ccn_sizeof_n(n + 1));
+};
 
 int ccn_div_euclid(cc_size nq, cc_unit *q, cc_size nr, cc_unit *r, cc_size na, const cc_unit *a, cc_size nd, const cc_unit *d) {
 	// NOTE(@facekapow):
@@ -574,7 +740,7 @@ int ccn_div_euclid(cc_size nq, cc_unit *q, cc_size nr, cc_unit *r, cc_size na, c
 		ccn_set(nr, r, tmp_remainder);
 
 	return 0;
-}
+};
 
 int ccn_div_use_recip(cc_size nq, cc_unit *q, cc_size nr, cc_unit *r, cc_size na, const cc_unit *a, cc_size nd, const cc_unit *d, const cc_unit *recip_d) {
   printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
