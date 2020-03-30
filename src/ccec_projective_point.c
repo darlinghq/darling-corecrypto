@@ -1,8 +1,19 @@
 #include <corecrypto/private/ccec_extra.h>
 #include <corecrypto/private/ccec_points.h>
 #include <corecrypto/private/cczp_extra.h>
-#include <stdio.h>
 #include <corecrypto/cc_debug.h>
+
+// change to 1 to debug via printing (not the best debugger method)
+// useful in case you don't have access to a debugger and something's
+// up
+// warning: generates a *ton* of input because these methods are used often
+#ifndef CCEC_PROJECTIVE_POINT_DEBUG
+	#define CCEC_PROJECTIVE_POINT_DEBUG 0
+#endif
+
+#if CCEC_PROJECTIVE_POINT_DEBUG
+	#include <stdio.h>
+#endif
 
 // https://en.wikibooks.org/wiki/Cryptography/Prime_Curve/Jacobian_Coordinates
 
@@ -16,7 +27,7 @@ int ccec_projective_add_points(ccec_const_cp_t curve, ccec_projective_point_cont
 	const cc_size size = ccn_sizeof_n(n);
 	cczp_const_t zp = (cczp_const_t)curve.zp;
 
-	#if DEBUG
+	#if CCEC_PROJECTIVE_POINT_DEBUG
 		puts("ccec_projective_add_points {");
 		cc_println_be("  point1.x", size, (const uint8_t*)point1.x);
 		cc_println_be("  point1.y", size, (const uint8_t*)point1.y);
@@ -32,7 +43,7 @@ int ccec_projective_add_points(ccec_const_cp_t curve, ccec_projective_point_cont
 	if (point1_is_at_infinity && point2_is_at_infinity) {
 		ccec_projective_point_container_init_at_infinity(n, result);
 
-		#if DEBUG
+		#if CCEC_PROJECTIVE_POINT_DEBUG
 			puts("  result = point-at-infinity");
 			puts("}");
 		#endif
@@ -41,7 +52,7 @@ int ccec_projective_add_points(ccec_const_cp_t curve, ccec_projective_point_cont
 	} else if (point1_is_at_infinity) {
 		ccec_projective_point_container_copy(result, point2);
 
-		#if DEBUG
+		#if CCEC_PROJECTIVE_POINT_DEBUG
 			cc_println_be("  result.x", size, (const uint8_t*)result.x);
 			cc_println_be("  result.y", size, (const uint8_t*)result.y);
 			cc_println_be("  result.z", size, (const uint8_t*)result.z);
@@ -52,7 +63,7 @@ int ccec_projective_add_points(ccec_const_cp_t curve, ccec_projective_point_cont
 	} else if (point2_is_at_infinity) {
 		ccec_projective_point_container_copy(result, point1);
 
-		#if DEBUG
+		#if CCEC_PROJECTIVE_POINT_DEBUG
 			cc_println_be("  result.x", size, (const uint8_t*)result.x);
 			cc_println_be("  result.y", size, (const uint8_t*)result.y);
 			cc_println_be("  result.z", size, (const uint8_t*)result.z);
@@ -83,7 +94,7 @@ int ccec_projective_add_points(ccec_const_cp_t curve, ccec_projective_point_cont
 
 	if (ccn_cmp(n, u1, u2) == 0) {
 		if (ccn_cmp(n, s1, s2) == 0) {
-			#if DEBUG
+			#if CCEC_PROJECTIVE_POINT_DEBUG
 				puts("  error = wrong function (use `ccec_projective_double_point`)");
 				puts("}");
 			#endif
@@ -92,7 +103,7 @@ int ccec_projective_add_points(ccec_const_cp_t curve, ccec_projective_point_cont
 		} else {
 			ccec_projective_point_container_init_at_infinity(n, result);
 
-			#if DEBUG
+			#if CCEC_PROJECTIVE_POINT_DEBUG
 				puts("  result = point-at-infinity");
 				puts("}");
 			#endif
@@ -154,7 +165,7 @@ int ccec_projective_add_points(ccec_const_cp_t curve, ccec_projective_point_cont
 		cczp_mul_mod(zp, result.z, result.z, point2.z);
 	};
 
-	#if DEBUG
+	#if CCEC_PROJECTIVE_POINT_DEBUG
 		cc_println_be("  result.x", size, (const uint8_t*)result.x);
 		cc_println_be("  result.y", size, (const uint8_t*)result.y);
 		cc_println_be("  result.z", size, (const uint8_t*)result.z);
@@ -188,7 +199,7 @@ int ccec_projective_double_point(ccec_const_cp_t curve, ccec_projective_point_co
 	const cc_size size = ccn_sizeof_n(n);
 	cczp_const_t zp = (cczp_const_t)curve.zp;
 
-	#if DEBUG
+	#if CCEC_PROJECTIVE_POINT_DEBUG
 		puts("ccec_projective_double_point {");
 		cc_println_be("   point.x", size, (const uint8_t*)point.x);
 		cc_println_be("   point.y", size, (const uint8_t*)point.y);
@@ -198,7 +209,7 @@ int ccec_projective_double_point(ccec_const_cp_t curve, ccec_projective_point_co
 	if (ccn_n(n, point.y) <= 1 && point.y[0] == 0) {
 		ccec_projective_point_container_init_at_infinity(n, result);
 
-		#if DEBUG
+		#if CCEC_PROJECTIVE_POINT_DEBUG
 			puts("  result = point-at-infinity");
 			puts("}");
 		#endif
@@ -278,7 +289,7 @@ int ccec_projective_double_point(ccec_const_cp_t curve, ccec_projective_point_co
 		cczp_add_mod(n, result.z, result.z, result.z, zp);
 	};
 
-	#if DEBUG
+	#if CCEC_PROJECTIVE_POINT_DEBUG
 		cc_println_be("  result.x", size, (const uint8_t*)result.x);
 		cc_println_be("  result.y", size, (const uint8_t*)result.y);
 		cc_println_be("  result.z", size, (const uint8_t*)result.z);

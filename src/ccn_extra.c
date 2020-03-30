@@ -1,7 +1,18 @@
 #include <corecrypto/private/ccn_extra.h>
 #include <stdbool.h>
-#include <stdio.h>
 #include <corecrypto/cc_debug.h>
+
+// change to 1 to debug via printing (not the best debugger method)
+// useful in case you don't have access to a debugger and something's
+// up
+// warning: generates a *ton* of input because these methods are used often
+#ifndef CCN_EXTRA_DEBUG
+	#define CCN_EXTRA_DEBUG 0
+#endif
+
+#if CCN_EXTRA_DEBUG
+	#include <stdio.h>
+#endif
 
 void ccn_div_long(cc_size n_operand, cc_unit* quotient, const cc_unit* operand, cc_size n_divisor, const cc_unit* divisor) {
 	cc_size n = ccn_n(n_divisor, divisor);
@@ -201,7 +212,7 @@ int ccn_modular_multiplicative_inverse(cc_size n, cc_unit* result, const cc_unit
 		}
 	*/
 
-	#if DEBUG
+	#if CCN_EXTRA_DEBUG
 		puts("ccn_modular_multiplicative_inverse {");
 		cc_println_be("       a", ccn_sizeof_n(n), (const uint8_t*)a);
 		cc_println_be("       b", ccn_sizeof_n(n), (const uint8_t*)b);
@@ -271,7 +282,7 @@ int ccn_modular_multiplicative_inverse(cc_size n, cc_unit* result, const cc_unit
 	// return t
 	memcpy(result, t, ccn_sizeof_n(n));
 
-	#if DEBUG
+	#if CCN_EXTRA_DEBUG
 		cc_println_be("  result", ccn_sizeof_n(n), (const uint8_t*)result);
 		puts("}");
 	#endif

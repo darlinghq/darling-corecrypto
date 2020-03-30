@@ -636,9 +636,18 @@ int ccec_verify(ccec_pub_ctx_t key, size_t digest_len, const uint8_t *digest,
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
 
-void ccec_export_pub(ccec_pub_ctx_t key, void *out) {
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
-}
+void ccec_export_pub(ccec_pub_ctx_t key, void* out) {
+	const cc_size n = ccec_ctx_n(key);
+	const cc_size total_size = ccec_export_pub_size(key);
+	const cc_size int_size = (total_size - 1) / 2;
+
+	uint8_t* data = out;
+
+	data[0] = 0x04;
+
+	ccn_write_uint_padded(n, ccec_ctx_x(key), int_size, data + 1);
+	ccn_write_uint_padded(n, ccec_ctx_y(key), int_size, data + 1 + int_size);
+};
 
 int ccec_der_import_priv(ccec_const_cp_t cp, size_t length, const uint8_t *data, ccec_full_ctx_t full_key) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
