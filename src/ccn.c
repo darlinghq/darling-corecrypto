@@ -452,9 +452,20 @@ int ccn_read_uint(cc_size n, cc_unit *r, size_t data_size, const uint8_t *data) 
 
 }
 
-size_t ccn_write_uint_size(cc_size n, const cc_unit *s) {
-  n = ccn_n(n, s);
-  return ccn_sizeof_n(n + 1);
+// note that this is NOT the same as `ccn_sizeof`
+// this is effectively the same as ceil(x / 8)
+#define cc_sizeof_bits(x) ((x + 7) / 8)
+
+size_t ccn_write_int_size(cc_size n, const cc_unit* s) {
+	const cc_size bits = ccn_bitlen(n, s);
+	return cc_sizeof_bits(bits);
+};
+
+size_t ccn_write_uint_size(cc_size n, const cc_unit* s) {
+	// the `+ 1` is to ensure that the highest bit is never set,
+	// thus the result is always interpretted as an unsigned integer
+	const cc_size bits = ccn_bitlen(n, s) + 1;
+	return cc_sizeof_bits(bits);
 };
 
 void ccn_write_uint(cc_size n, const cc_unit *s, size_t out_size, void *out) {
@@ -471,11 +482,6 @@ void ccn_write_uint(cc_size n, const cc_unit *s, size_t out_size, void *out) {
 		for (uint8_t octet = CCN_UNIT_SIZE; octet > 0; --octet, ++data_idx)
 			data[data_idx] = (s[ccn_idx - 1] >> ((octet - 1) * 8)) & 0xff;
 }
-
-size_t ccn_write_int_size(cc_size n, const cc_unit *s) {
-  n = ccn_n(n, s);
-  return ccn_sizeof_n(n);
-};
 
 void ccn_write_int(cc_size n, const cc_unit *s, size_t out_size, void *out) {
   printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);

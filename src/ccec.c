@@ -761,13 +761,71 @@ int ccec_generate_key(ccec_const_cp_t cp, struct ccrng_state* rng, ccec_full_ctx
 	return 0;
 };
 
-int ccecdh_compute_shared_secret(ccec_full_ctx_t private_key,
-                                 ccec_pub_ctx_t public_key,
-                                 size_t *computed_shared_secret_len, uint8_t *computed_shared_secret,
-                                 struct ccrng_state *masking_rng) {
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
-	return -1;
-}
+int ccecdh_compute_shared_secret(ccec_full_ctx_t private_key, ccec_pub_ctx_t public_key, size_t* computed_shared_secret_len, uint8_t* computed_shared_secret, struct ccrng_state* masking_rng) {
+	ccec_const_cp_t pub_curve = ccec_ctx_cp(public_key);
+
+	// TODO: check that both keys are using the same curve
+	//ccec_const_cp_t priv_curve = ccec_ctx_cp(public_key);
+
+	const cc_size n = ccec_ctx_n(public_key);
+	const cc_size size = ccn_sizeof_n(n);
+
+	#if DEBUG
+		cc_println("private_key", ccec_full_ctx_size(size), (const uint8_t*)private_key._full);
+		cc_println("public key", ccec_pub_ctx_size(size), (const uint8_t*)public_key._pub);
+		printf("provided buffer length: %zu\n", *computed_shared_secret_len);
+	#endif
+
+	const cc_unit* k = ccec_ctx_k(private_key);
+
+	ccec_const_projective_point_container_t pub_point = {
+		.n = n,
+		.x = ccec_ctx_x(public_key),
+		.y = ccec_ctx_y(public_key),
+		.z = ccec_ctx_z(public_key),
+	};
+
+	cc_unit product_x[n];
+	cc_unit product_y[n];
+	cc_unit product_z[n];
+
+	memset(product_x, 0, sizeof product_x);
+	memset(product_y, 0, sizeof product_y);
+	memset(product_z, 0, sizeof product_z);
+
+	ccec_projective_point_container_t product = {
+		.n = n,
+		.x = product_x,
+		.y = product_y,
+		.z = product_z,
+	};
+
+	ccec_projective_multiply(pub_curve, product, pub_point, n, k);
+
+	cc_unit final_x[n];
+	cc_unit final_y[n];
+
+	memset(final_x, 0, sizeof final_x);
+	memset(final_y, 0, sizeof final_y);
+
+	ccec_affine_point_container_from_projective_point(pub_curve, (ccec_affine_point_container_t) {
+		.n = n,
+		.x = final_x,
+		.y = final_y,
+	}, ccec_projective_point_container_constify(product));
+
+	memset(computed_shared_secret, 0, *computed_shared_secret_len);
+
+	*computed_shared_secret_len = ccn_write_uint_size(n, final_x);
+
+	ccn_write_uint_padded(n, final_x, *computed_shared_secret_len, computed_shared_secret);
+
+	#if DEBUG
+		cc_println("computed_shared_secret", *computed_shared_secret_len, (const uint8_t*)computed_shared_secret);
+	#endif
+
+	return 0;
+};
 
 int ccec_get_pubkey_components(ccec_pub_ctx_t key, size_t *nbits,
                            uint8_t *x, size_t *xsize,
