@@ -6,6 +6,8 @@
 #include <corecrypto/ccdigest.h>
 #include <corecrypto/ccdh.h>
 
+#include <stdbool.h>
+
 typedef ccdh_gp ccsrp_gp;
 typedef ccdh_gp_t ccsrp_gp_t;
 typedef ccdh_const_gp_t ccsrp_const_gp_t;
