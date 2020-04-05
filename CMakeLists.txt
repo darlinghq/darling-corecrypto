@@ -57,6 +57,8 @@ set(corecrypto_sources
 		src/ccec_points.c
 		src/ccn_extra.c
 		src/cczp_extra.c
+		src/ccaes_extra.c
+		src/ccgcm.c
 )
 
 set(DYLIB_INSTALL_NAME "/usr/lib/system/libcorecrypto.dylib")
