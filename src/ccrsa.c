@@ -49,15 +49,6 @@ const uint8_t *ccder_decode_rsa_priv(const ccrsa_full_ctx_t key, const uint8_t *
  * valid is set to false if there is an invalid signature.
  */
 int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t* oid, size_t digest_len, const uint8_t* digest, size_t sig_len, const uint8_t* sig, bool* valid) {
-	#if DEBUG
-		cc_println("key", ccrsa_pub_ctx_size(ccn_sizeof_n(ccrsa_ctx_n(key))), (const uint8_t*)ccrsa_ctx_zm(key).u);
-		cc_println("oid", strlen((const char*)oid), oid);
-		printf("digest_len: %zu\n", digest_len);
-		cc_println("digest", digest_len, digest);
-		printf("sig_len: %zu\n", sig_len);
-		cc_println("sig (big endian)", sig_len, sig);
-	#endif
-
 	*valid = false;
 
 	cc_unit* s = NULL;
@@ -79,20 +70,11 @@ int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t* oid, size_t digest
 
 	cc_size sig_bits = ccn_bitsof_size(sig_len);
 
-	#if DEBUG
-		printf("n of mod: %zu\n", mod_size);
-		printf("mod_len: %zu\n", mod_len);
-		cc_println("mod (little endian)", mod_byte_size, (const uint8_t*)modulus);
-		cc_println("exp (little endian)", mod_byte_size, (const uint8_t*)exponent);
-		cc_println("mod_recip (little endian)", ccn_sizeof_n(mod_size + 1), (const uint8_t*)reciprocal);
-		cc_println_be("mod (big endian)", mod_byte_size, (const uint8_t*)modulus);
-		cc_println_be("exp (big endian)", mod_byte_size, (const uint8_t*)exponent);
-		cc_println_be("mod_recip (big endian)", ccn_sizeof_n(mod_size + 1), (const uint8_t*)reciprocal);
-	#endif
-
 	// number of bits in signature should equal the number of bits in modulus
 	if (sig_bits != mod_used_bits) {
-		printf("%s: sig_bits (%zu) != mod_bits (%zu)\n", __PRETTY_FUNCTION__, sig_bits, mod_used_bits);
+		#if DEBUG
+			printf("%s: sig_bits (%zu) != mod_bits (%zu)\n", __PRETTY_FUNCTION__, sig_bits, mod_used_bits);
+		#endif
 		goto fail;
 	}
 
@@ -131,11 +113,6 @@ int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t* oid, size_t digest
 	memset(em, 0, sig_bytes);
 	ccn_write_uint(sig_units, m, sig_bytes, em);
 
-	#if DEBUG
-		cc_println("m (little endian)", sig_bytes, (const uint8_t*)m);
-		cc_println("em (big endian)", sig_bytes, (const uint8_t*)em);
-	#endif
-
 	// encode the digest into an EMSA-PKCS#1 v1.5 encoded message
 	// to compare with `em`
 	em_prime = __builtin_alloca(sig_bytes);
@@ -146,10 +123,6 @@ int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t* oid, size_t digest
 		#endif
 		goto fail;
 	}
-
-	#if DEBUG
-		cc_println("em_prime (big endian)", sig_bytes, em_prime);
-	#endif
 
 	*valid = !memcmp(em, em_prime, sig_bytes);
 	if (!*valid) {
@@ -171,10 +144,6 @@ fail:
  * Take modulus and exponent and put them next to each other in the public key
  */
 void ccrsa_init_pub(ccrsa_pub_ctx_t key, const cc_unit* modulus, const cc_unit* e) {
-	#if DEBUG
-		printf("DARLING CRYPTO IMPL: %s\n", __PRETTY_FUNCTION__);
-	#endif
-
 	const cc_size mod_n = ccrsa_ctx_n(key);
 	cczp_t zp = ccrsa_ctx_zm(key);
 

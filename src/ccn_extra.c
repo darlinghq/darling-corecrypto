@@ -212,12 +212,6 @@ int ccn_modular_multiplicative_inverse(cc_size n, cc_unit* result, const cc_unit
 		}
 	*/
 
-	#if CCN_EXTRA_DEBUG
-		puts("ccn_modular_multiplicative_inverse {");
-		cc_println_be("       a", ccn_sizeof_n(n), (const uint8_t*)a);
-		cc_println_be("       b", ccn_sizeof_n(n), (const uint8_t*)b);
-	#endif
-
 	// let t = 0
 	cc_unit t[n];
 	memset(t, 0, sizeof t);
@@ -281,11 +275,6 @@ int ccn_modular_multiplicative_inverse(cc_size n, cc_unit* result, const cc_unit
 
 	// return t
 	memcpy(result, t, ccn_sizeof_n(n));
-
-	#if CCN_EXTRA_DEBUG
-		cc_println_be("  result", ccn_sizeof_n(n), (const uint8_t*)result);
-		puts("}");
-	#endif
 
 	return 0;
 };

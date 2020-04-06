@@ -577,11 +577,6 @@ size_t ccec_x963_import_priv_size(size_t in_len) {
 }
 
 int ccec_import_pub(ccec_const_cp_t cp, size_t in_len, const uint8_t* in, ccec_pub_ctx_t key) {
-	#if DEBUG
-		printf("in_len: %zu\n", in_len);
-		cc_println("in", in_len, in);
-	#endif
-
 	if (in_len < 1) {
 		#if DEBUG
 			printf("%s: empty public key\n", __PRETTY_FUNCTION__);
@@ -758,15 +753,6 @@ int ccec_generate_key(ccec_const_cp_t cp, struct ccrng_state* rng, ccec_full_ctx
 	ccn_zero(n, z);
 	z[0] = 1;
 
-	#if DEBUG
-		cc_println("generated key", ccec_full_ctx_size(size), (const uint8_t*)key._full);
-
-		cc_println_be("  x", size, (const uint8_t*)ccec_ctx_x(key));
-		cc_println_be("  y", size, (const uint8_t*)ccec_ctx_y(key));
-		cc_println_be("  z", size, (const uint8_t*)ccec_ctx_z(key));
-		cc_println_be("  k", size, (const uint8_t*)ccec_ctx_k(key));
-	#endif
-
 	return 0;
 };
 
@@ -778,12 +764,6 @@ int ccecdh_compute_shared_secret(ccec_full_ctx_t private_key, ccec_pub_ctx_t pub
 
 	const cc_size n = ccec_ctx_n(public_key);
 	const cc_size size = ccn_sizeof_n(n);
-
-	#if DEBUG
-		cc_println("private_key", ccec_full_ctx_size(size), (const uint8_t*)private_key._full);
-		cc_println("public key", ccec_pub_ctx_size(size), (const uint8_t*)public_key._pub);
-		printf("provided buffer length: %zu\n", *computed_shared_secret_len);
-	#endif
 
 	const cc_unit* k = ccec_ctx_k(private_key);
 
@@ -828,10 +808,6 @@ int ccecdh_compute_shared_secret(ccec_full_ctx_t private_key, ccec_pub_ctx_t pub
 	*computed_shared_secret_len = ccn_write_uint_size(n, final_x);
 
 	ccn_write_uint_padded(n, final_x, *computed_shared_secret_len, computed_shared_secret);
-
-	#if DEBUG
-		cc_println("computed_shared_secret", *computed_shared_secret_len, (const uint8_t*)computed_shared_secret);
-	#endif
 
 	return 0;
 };
