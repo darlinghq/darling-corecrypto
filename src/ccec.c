@@ -6,6 +6,8 @@
 #include <corecrypto/ccder.h>
 #include <corecrypto/private/ccec_points.h>
 #include <corecrypto/private/ccec_extra.h>
+#include <corecrypto/private/ccn_extra.h>
+#include <corecrypto/private/cczp_extra.h>
 
 // essential reading: http://www.secg.org/sec1-v2.pdf
 
@@ -626,10 +628,132 @@ int ccec_verify_composite(ccec_pub_ctx_t key, size_t digest_len, const uint8_t *
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
 
-int ccec_verify(ccec_pub_ctx_t key, size_t digest_len, const uint8_t *digest,
-                size_t sig_len, const uint8_t *sig,  bool *valid) {
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
-}
+int ccec_verify(ccec_pub_ctx_t key, size_t digest_len, const uint8_t* digest, size_t sig_len, const uint8_t* sig, bool* valid) {
+	const cc_size n = ccec_ctx_n(key);
+	const ccec_const_cp_t curve = ccec_ctx_cp(key);
+	const cc_unit* const order = ccec_cp_o(curve);
+	const size_t log_2_n = ccn_bitlen(n, order);
+
+	uint8_t zp_bytes[cczp_size(ccn_sizeof_n(n))];
+	memset(zp_bytes, 0, sizeof zp_bytes);
+	// casts necessary to shut some compiler warnings up
+	cczp_t zp = (cczp_t)(struct cczp*)zp_bytes;
+	CCZP_N(zp) = n;
+	memcpy(CCZP_PRIME(zp), order, ccn_sizeof_n((2 * n) + 1));
+	zp.zp->mod_prime = cczp_mod;
+
+	cc_unit e[n];
+	memset(e, 0, sizeof e);
+
+	ccn_read_uint(n, e, (log_2_n >= 8 * digest_len) ? (log_2_n + 7) / 8 : digest_len, digest);
+
+	cc_unit r[n];
+	cc_unit s[n];
+	memset(r, 0, sizeof r);
+	memset(s, 0, sizeof s);
+
+	const uint8_t* const der_end = sig + sig_len;
+	const uint8_t* seq_end = NULL;
+	const uint8_t* const seq_start = ccder_decode_sequence_tl(&seq_end, sig, der_end);
+	const uint8_t* const s_start = ccder_decode_uint(n, r, seq_start, der_end);
+	ccder_decode_uint(n, s, s_start, der_end);
+
+	cc_unit s_inv[n];
+	memset(s_inv, 0, sizeof s_inv);
+
+	ccn_modular_multiplicative_inverse(n, s_inv, s, order);
+
+	// double-sized so that we can use `cczp_mod` on it later
+	cc_unit rx[2 * n];
+	cc_unit ry[n];
+	cc_unit rz[n];
+
+	memset(rx, 0, sizeof rx);
+	memset(ry, 0, sizeof ry);
+	memset(rz, 0, sizeof rz);
+
+	ccec_projective_point_container_t R = {
+		.n = n,
+		.x = rx,
+		.y = ry,
+		.z = rz,
+	};
+
+	{
+		cc_unit u1[n];
+		cc_unit u2[n];
+		memset(u1, 0, sizeof u1);
+		memset(u2, 0, sizeof u2);
+
+		cczp_mul_mod(zp, u1, e, s_inv);
+		cczp_mul_mod(zp, u2, r, s_inv);
+
+		cc_unit u1gx[n];
+		cc_unit u1gy[n];
+		cc_unit u1gz[n];
+
+		memset(u1gx, 0, sizeof u1gx);
+		memset(u1gy, 0, sizeof u1gy);
+		memset(u1gz, 0, sizeof u1gz);
+
+		ccec_projective_point_container_t u1g = {
+			.n = n,
+			.x = u1gx,
+			.y = u1gy,
+			.z = u1gz,
+		};
+
+		cc_unit u2qx[n];
+		cc_unit u2qy[n];
+		cc_unit u2qz[n];
+
+		memset(u2qx, 0, sizeof u2qx);
+		memset(u2qy, 0, sizeof u2qy);
+		memset(u2qz, 0, sizeof u2qz);
+
+		ccec_projective_point_container_t u2q = {
+			.n = n,
+			.x = u2qx,
+			.y = u2qy,
+			.z = u2qz,
+		};
+
+		cc_unit tmp_z[n];
+		memset(tmp_z, 0, sizeof tmp_z);
+		tmp_z[0] = 1;
+
+		ccec_projective_multiply(curve, u1g, (ccec_const_projective_point_container_t) {
+			.n = n,
+			.x = ccec_cp_x(curve),
+			.y = ccec_cp_y(curve),
+			.z = tmp_z,
+		}, n, u1);
+
+		ccec_projective_multiply(curve, u2q, (ccec_const_projective_point_container_t) {
+			.n = n,
+			.x = ccec_ctx_x(key),
+			.y = ccec_ctx_y(key),
+			.z = ccec_ctx_z(key),
+		}, n, u2);
+
+		ccec_projective_add_points(curve, R, ccec_projective_point_container_constify(u1g), ccec_projective_point_container_constify(u2q));
+	};
+
+	ccec_affine_point_container_from_projective_point(curve, (ccec_affine_point_container_t) {
+		.n = n,
+		.x = rx,
+		.y = ry,
+	}, ccec_projective_point_container_constify(R));
+
+	cc_unit v[n];
+	memset(v, 0, sizeof v);
+
+	cczp_mod(zp, v, rx, NULL);
+
+	*valid = !memcmp(v, r, sizeof v);
+
+	return 0;
+};
 
 void ccec_export_pub(ccec_pub_ctx_t key, void* out) {
 	const cc_size n = ccec_ctx_n(key);
