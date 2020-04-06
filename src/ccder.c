@@ -313,7 +313,7 @@ const uint8_t *ccder_decode_tag(ccder_tag *tagp, const uint8_t *der, const uint8
 	size_t tag_len = 1;
 	*tagp = ((ccder_tag)(der[0] >> 5)) << CCDER_TAG_MASK_SHIFT_BACK;
 
-	if (der[0] & 0x1f) {
+	if ((der[0] & 0x1f) == 0x1f) {
 		// long form
 		// 0x80 == 0b10000000
 		size_t i = 0;
