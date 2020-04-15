@@ -14,9 +14,10 @@ int ccrsa_import_pub(ccrsa_pub_ctx_t key, size_t inlen, const uint8_t *der) {
 
 	size_t mod_length = 0;
 	const uint8_t* mod_body = ccder_decode_tl(CCDER_INTEGER, &mod_length, body, body_end);
+	const uint8_t* mod_body_end = mod_body + mod_length;
 
 	size_t exp_length = 0;
-	const uint8_t* exp_body = ccder_decode_tl(CCDER_INTEGER, &exp_length, mod_body, body_end);
+	const uint8_t* exp_body = ccder_decode_tl(CCDER_INTEGER, &exp_length, mod_body_end, body_end);
 
 	cc_size n = ccn_nof_size(mod_length);
 
