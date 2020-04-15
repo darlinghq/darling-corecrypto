@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <corecrypto/ccrsa_priv.h>
 #include <corecrypto/cc_debug.h>
+#include <corecrypto/ccder.h>
 
 // Reference used is https://tools.ietf.org/html/rfc8017
 
@@ -172,10 +173,15 @@ int ccrsa_export_pub(const ccrsa_pub_ctx_t key, size_t out_len, uint8_t *out)
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
 
-cc_size ccder_decode_rsa_pub_x509_n(const uint8_t *der, const uint8_t *der_end)
-{
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
-}
+cc_size ccder_decode_rsa_pub_x509_n(const uint8_t *der, const uint8_t *der_end) {
+	const uint8_t* body_end = NULL;
+	const uint8_t* body = ccder_decode_sequence_tl(&body_end, der, der_end);
+
+	size_t mod_length = 0;
+	const uint8_t* mod_body = ccder_decode_tl(CCDER_INTEGER, &mod_length, body, body_end);
+
+	return ccn_nof_size(mod_length);
+};
 
 size_t ccder_encode_rsa_priv_size(const ccrsa_full_ctx_t key)
 {
