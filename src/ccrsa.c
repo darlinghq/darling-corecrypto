@@ -40,10 +40,17 @@ cc_size ccder_decode_rsa_pub_n(const uint8_t *der, const uint8_t *der_end)
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
 
-int ccrsa_pub_crypt(ccrsa_pub_ctx_t key, cc_unit *out, const cc_unit *in)
-{
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
-}
+int ccrsa_pub_crypt(ccrsa_pub_ctx_t key, cc_unit* out, const cc_unit* in) {
+	cc_size n = ccrsa_ctx_n(key);
+	cczp_t zp = ccrsa_ctx_zm(key);
+	cc_unit* exponent = ccrsa_ctx_e(key);
+
+	ccn_zero(n, out);
+	// c = m^e mod n
+	cczp_power(zp, out, in, exponent);
+
+	return 0;
+};
 
 int ccrsa_generate_key(unsigned long nbits, ccrsa_full_ctx_t rsa_ctx,
                        size_t e_size, const void *e, struct ccrng_state *rng)
