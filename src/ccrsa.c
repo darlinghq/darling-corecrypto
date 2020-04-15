@@ -7,10 +7,33 @@
 
 // Reference used is https://tools.ietf.org/html/rfc8017
 
-int ccrsa_import_pub(ccrsa_pub_ctx_t key, size_t inlen, const uint8_t *der)
-{
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
-}
+int ccrsa_import_pub(ccrsa_pub_ctx_t key, size_t inlen, const uint8_t *der) {
+	const uint8_t* der_end = der + inlen;
+	const uint8_t* body_end = NULL;
+	const uint8_t* body = ccder_decode_sequence_tl(&body_end, der, der_end);
+
+	size_t mod_length = 0;
+	const uint8_t* mod_body = ccder_decode_tl(CCDER_INTEGER, &mod_length, body, body_end);
+
+	size_t exp_length = 0;
+	const uint8_t* exp_body = ccder_decode_tl(CCDER_INTEGER, &exp_length, mod_body, body_end);
+
+	cc_size n = ccn_nof_size(mod_length);
+
+	cc_unit mod[n];
+	cc_unit exp[n];
+
+	memset(mod, 0, sizeof mod);
+	memset(exp, 0, sizeof exp);
+
+	ccn_read_uint(n, mod, mod_length, mod_body);
+	ccn_read_uint(n, exp, exp_length, exp_body);
+
+	ccrsa_ctx_n(key) = n;
+	ccrsa_init_pub(key, mod, exp);
+
+	return 0;
+};
 
 cc_size ccder_decode_rsa_pub_n(const uint8_t *der, const uint8_t *der_end)
 {
