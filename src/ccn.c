@@ -462,9 +462,11 @@ size_t ccn_write_int_size(cc_size n, const cc_unit* s) {
 };
 
 size_t ccn_write_uint_size(cc_size n, const cc_unit* s) {
-	// the `+ 1` is to ensure that the highest bit is never set,
-	// thus the result is always interpretted as an unsigned integer
-	const cc_size bits = ccn_bitlen(n, s) + 1;
+	// ~~the `+ 1` is to ensure that the highest bit is never set,~~
+	// ~~thus the result is always interpretted as an unsigned integer~~
+	// ignore that, Apple's version doesn't do this (although I think it *should*)
+	// it's exactly the same as `ccn_write_int_size`
+	const cc_size bits = ccn_bitlen(n, s) /* + 1 */;
 	return cc_sizeof_bits(bits);
 };
 
