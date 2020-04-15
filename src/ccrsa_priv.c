@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <corecrypto/ccder.h>
+#include <string.h>
 
 int ccrsa_oaep_encode_parameter(const struct ccdigest_info* di,
                                 struct ccrng_state *rng,
@@ -122,17 +123,17 @@ int ccrsa_emsa_pkcs1v15_encode(size_t emlen, uint8_t* em, size_t dgstlen, const 
 	return 0;
 }
 
-// NOTE(@facekapow):
-// why is this even here?
-// according to RFC 8017 (and even the earlier RFC 3447, which 8017 replaces),
-// EMSA-PKCS #1 v1.5 only implements an encoding algorithm; no verification algorithm is specified
-// so... not sure why this is here...
-int ccrsa_emsa_pkcs1v15_verify(size_t emlen, uint8_t *em,
-		               size_t dgstlen, const uint8_t *dgst,
-			       const uint8_t *oid)
-{
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
-	return -1;
+int ccrsa_emsa_pkcs1v15_verify(size_t emlen, uint8_t* em, size_t dgstlen, const uint8_t* dgst, const uint8_t* oid) {
+	uint8_t encoded[emlen];
+
+	memset(encoded, 0, sizeof encoded);
+
+	if (ccrsa_emsa_pkcs1v15_encode(emlen, encoded, dgstlen, dgst, oid))
+		return -1;
+
+	bool valid = !memcmp(em, encoded, emlen);
+
+	return valid ? 0 : 1;
 }
 
 int ccrsa_eme_pkcs1v15_encode(struct ccrng_state *rng,
