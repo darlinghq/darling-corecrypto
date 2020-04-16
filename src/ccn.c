@@ -479,10 +479,10 @@ void ccn_write_uint(cc_size n, const cc_unit *s, size_t out_size, void *out) {
 	// thus, to write the output in big endian, we loop over the cc_units
 	// backwards, and then over each octet backwards
 
-	size_t data_idx = 0;
-	for (size_t ccn_idx = n; ccn_idx > 0; --ccn_idx)
-		for (uint8_t octet = CCN_UNIT_SIZE; octet > 0; --octet, ++data_idx)
-			data[data_idx] = (s[ccn_idx - 1] >> ((octet - 1) * 8)) & 0xff;
+	size_t data_idx = out_size;
+	for (size_t ccn_idx = 0; ccn_idx < n; ++ccn_idx)
+		for (uint8_t octet = 0; octet < CCN_UNIT_SIZE && data_idx > 0; ++octet, --data_idx)
+			data[data_idx - 1] = (s[ccn_idx] >> (octet * 8)) & 0xff;
 }
 
 void ccn_write_int(cc_size n, const cc_unit *s, size_t out_size, void *out) {
