@@ -43,12 +43,23 @@ cc_size ccder_decode_rsa_pub_n(const uint8_t *der, const uint8_t *der_end)
 
 int ccrsa_pub_crypt(ccrsa_pub_ctx_t key, cc_unit* out, const cc_unit* in) {
 	cc_size n = ccrsa_ctx_n(key);
+	cc_size real_n = ccn_n(n, ccrsa_ctx_m(key));
 	cczp_t zp = ccrsa_ctx_zm(key);
 	cc_unit* exponent = ccrsa_ctx_e(key);
 
-	ccn_zero(n, out);
+	cc_unit in_tmp[n];
+	cc_unit out_tmp[n];
+
+	// we don't need to zero the whole thing
+	ccn_zero(n - real_n, in_tmp + real_n);
+	ccn_zero(n, out_tmp);
+
+	ccn_set(real_n, in_tmp, in);
+
 	// c = m^e mod n
-	cczp_power(zp, out, in, exponent);
+	cczp_power(zp, out_tmp, in_tmp, exponent);
+
+	ccn_set(real_n, out, out_tmp);
 
 	return 0;
 };
