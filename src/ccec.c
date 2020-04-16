@@ -15,8 +15,24 @@ size_t ccec_compact_import_pub_size(size_t in_len) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
 
+#define k_ccec_cp_t_null ((ccec_const_cp_t)((const struct cczp_prime*)(NULL)))
+
 ccec_const_cp_t ccec_get_cp(size_t keysize) {
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	switch (keysize) {
+		case 192:
+			return ccec_cp_192();
+		case 224:
+			return ccec_cp_224();
+		case 256:
+			return ccec_cp_256();
+		case 384:
+			return ccec_cp_384();
+		case 521:
+			return ccec_cp_521();
+		default:
+			break;
+	}
+	return k_ccec_cp_t_null;
 }
 
 void ccec_x963_export(const int fullkey, void *out, ccec_full_ctx_t key) {
@@ -567,16 +583,26 @@ void ccec_compact_export(const int fullkey, void *out, ccec_full_ctx_t key) {
 }
 
 size_t ccec_x963_import_pub_size(size_t in_len) {
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
-}
+	return ccn_bitsof_size((in_len - 1) / 2);
+};
 
 int ccec_keysize_is_supported(size_t keysize) {
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
-}
+	switch (keysize) {
+		case 192:
+		case 224:
+		case 256:
+		case 384:
+		case 521:
+			return 1;
+		default:
+			break;
+	}
+	return 0;
+};
 
 size_t ccec_x963_import_priv_size(size_t in_len) {
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
-}
+	return ccn_bitsof_size((in_len - 1) / 3);
+};
 
 int ccec_import_pub(ccec_const_cp_t cp, size_t in_len, const uint8_t* in, ccec_pub_ctx_t key) {
 	if (in_len < 1) {
