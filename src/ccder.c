@@ -50,7 +50,7 @@ size_t ccder_sizeof_len(size_t len) {
 			len >>= 8;
 			++total;
 		} while (len > 0);
-		return total;
+		return total + 1;
 	} else {
 		return 1;
 	}
@@ -154,8 +154,7 @@ uint8_t *ccder_encode_tag(ccder_tag tag, const uint8_t *der, uint8_t *der_end) {
 	return tag_start;
 }
 
-uint8_t *
-ccder_encode_len(size_t len, const uint8_t *der, uint8_t *der_end) {
+uint8_t* ccder_encode_len(size_t len, const uint8_t* der, uint8_t* der_end) {
 	// lol `len_len`
 	size_t len_len = ccder_sizeof_len(len);
 	uint8_t* len_start = der_end - len_len;
@@ -167,11 +166,13 @@ ccder_encode_len(size_t len, const uint8_t *der, uint8_t *der_end) {
 	len_start[0] = (uint8_t)(len_len > 1 ? 1 : 0) << 7;
 
 	if (len_len > 1) {
+		--len_len;
 		// long form
-		len_start[0] |= (uint8_t)((len_len - 1) & 0x7f);
-		for (size_t i = 0; i < len_len - 1; ++i) {
-			len_start[i + 1] = (uint8_t)((len & (0xff << (i * 8))) >> (i * 8));
-		}
+		len_start[0] |= (uint8_t)(len_len & 0x7f);
+		++len_start;
+		for (size_t i = len_len; i > 0; --i)
+			len_start[len_len - i] = (uint8_t)((len >> ((i - 1) * 8)) & 0xff);
+		--len_start;
 	} else {
 		// short form
 		len_start[0] |= (uint8_t)(len & 0x7f);
@@ -198,11 +199,9 @@ ccder_encode_body_nocopy(size_t size, const uint8_t *der, uint8_t *der_end) {
 	return der_end - size;
 }
 
-uint8_t *
-ccder_encode_constructed_tl(ccder_tag tag, const uint8_t *body_end,
-                            const uint8_t *der, uint8_t *der_end) {
-	return ccder_encode_tl(tag | CCDER_CONSTRUCTED, (size_t)(body_end - der_end), der, der_end);
-}
+uint8_t* ccder_encode_constructed_tl(ccder_tag tag, const uint8_t* body_end, const uint8_t* der, uint8_t* der_end) {
+	return ccder_encode_tl(tag, (size_t)(body_end - der_end), der, der_end);
+};
 
 uint8_t *ccder_encode_oid(ccoid_t oid, const uint8_t *der, uint8_t *der_end) {
 	size_t oid_total_len = ccder_sizeof_oid(oid);
@@ -333,15 +332,15 @@ const uint8_t *ccder_decode_tag(ccder_tag *tagp, const uint8_t *der, const uint8
 	return der + tag_len;
 }
 
-const uint8_t *ccder_decode_len(size_t *lenp, const uint8_t *der, const uint8_t *der_end) {
+const uint8_t* ccder_decode_len(size_t* lenp, const uint8_t* der, const uint8_t* der_end) {
 	size_t len_len = 1;
 
 	if (der[0] & 0x80) {
 		// long form
-		len_len += der[0] & 0x7f;
-		for (size_t i = 0; i < len_len - 1; ++i) {
-			*lenp |= (size_t)der[i + 1] << (i * 8);
-		}
+		len_len = der[0] & 0x7f;
+		++der;
+		for (size_t i = len_len; i > 0; --i)
+			*lenp |= (size_t)der[len_len - i] << ((i - 1) * 8);
 	} else {
 		// short form
 		*lenp = der[0] & 0x7f;
