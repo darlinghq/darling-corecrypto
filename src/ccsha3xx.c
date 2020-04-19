@@ -14,14 +14,40 @@ static uint64_t ccsha512_initial_state[8] = {
     0x1F83D9ABFB41BD6Bll, 0x5BE0CD19137E2179ll
 };
 
-extern void ccdigest_final_64be(const struct ccdigest_info *di, ccdigest_ctx_t ctx,
-                 unsigned char *digest);
+static void ccdigest_final_128be(const struct ccdigest_info* di, ccdigest_ctx_t ctx, unsigned char* digest) {
+	// Add what we have left in to buffer to the total bits processed
+	uint64_t nbits = ccdigest_nbits(di, ctx) += ccdigest_num(di, ctx) * 8;
+
+	// terminating byte; equivalent to 0b10000000
+	ccdigest_data(di, ctx)[ccdigest_num(di, ctx)++] = 128;
+
+	// Push in zeroes until there are exactly 56 bytes in the internal buffer
+	if (ccdigest_num(di, ctx) != 112) {
+		uint8_t zeroes[128] = {0};
+		uint64_t count = (112 - ccdigest_num(di, ctx) + 128) % 128;
+		ccdigest_update(di, ctx, count, zeroes);
+	}
+
+	uint8_t len[16] = {0};
+
+	for (size_t i = 0; i < sizeof(uint64_t); ++i)
+		len[15 - i] = (nbits >> (i * 8)) & 0xff;
+
+	ccdigest_update(di, ctx, sizeof len, len);
+
+	for (size_t i = 0; i < di->output_size / sizeof(uint64_t); ++i) {
+		uint64_t item = ccdigest_state_u64(di, ctx)[i];
+		for (size_t j = 0; j < sizeof(uint64_t); ++j)
+			digest[(i * sizeof(uint64_t)) + (7 - j)] = (item >> (j * 8)) & 0xff;
+	}
+};
+
 static void ccsha3xx_compress(ccdigest_state_t state, size_t nblocks, const void *input);
 
 const struct ccdigest_info ccsha384_ltc_di = {
 		.initial_state = ccsha384_initial_state,
 		.compress = ccsha3xx_compress,
-		.final = ccdigest_final_64be,
+		.final = ccdigest_final_128be,
 		.output_size = CCSHA384_OUTPUT_SIZE,
 		.state_size = CCSHA512_STATE_SIZE,
 		.block_size = CCSHA512_BLOCK_SIZE,
@@ -32,7 +58,7 @@ const struct ccdigest_info ccsha384_ltc_di = {
 const struct ccdigest_info ccsha512_ltc_di = {
 		.initial_state = ccsha512_initial_state,
 		.compress = ccsha3xx_compress,
-		.final = ccdigest_final_64be,
+		.final = ccdigest_final_128be,
 		.output_size = CCSHA512_OUTPUT_SIZE,
 		.state_size = CCSHA512_STATE_SIZE,
 		.block_size = CCSHA512_BLOCK_SIZE,

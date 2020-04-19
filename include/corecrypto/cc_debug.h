@@ -65,6 +65,30 @@ extern int printf(const char *format, ...) __printflike(1,2);
 #include <corecrypto/cc.h>
 
 /* Print a byte array of arbitrary size */
-void cc_print(const char *label, size_t count, const uint8_t *s);
+CC_INLINE
+void cc_print(const char* label, size_t count, const uint8_t* array) {
+	printf("%s: ", label);
+	for (size_t i = 0; i < count; ++i)
+		printf("%02x", array[i]);
+};
+
+CC_INLINE
+void cc_println(const char* label, size_t count, const uint8_t* array) {
+	cc_print(label, count, array);
+	putchar('\n');
+};
+
+CC_INLINE
+void cc_print_be(const char* label, size_t size, const uint8_t* array) {
+	printf("%s: ", label);
+	for (size_t i = size; i > 0; --i)
+		printf("%02x", array[i - 1]);
+};
+
+CC_INLINE
+void cc_println_be(const char* label, size_t count, const uint8_t* array) {
+	cc_print_be(label, count, array);
+	putchar('\n');
+};
 
 #endif /* _CORECRYPTO_CCN_DEBUG_H_ */

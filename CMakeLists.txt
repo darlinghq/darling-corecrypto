@@ -53,6 +53,12 @@ set(corecrypto_sources
 		src/ccansikdf.c
 		src/ccecies.c
 		src/ccrng_pbkdf2.c
+		src/ccec_projective_point.c
+		src/ccec_points.c
+		src/ccn_extra.c
+		src/cczp_extra.c
+		src/ccaes_extra.c
+		src/ccgcm.c
 		src/ccsrp.c
 )
 
