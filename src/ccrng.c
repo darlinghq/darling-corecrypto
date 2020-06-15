@@ -21,3 +21,16 @@ struct ccrng_state* ccrng(int* error) {
 
 	return (struct ccrng_state*)&ccrng_global_system_rng_instance;
 };
+
+int ccrng_uniform(struct ccrng_state *rng, uint64_t bound, uint64_t *rand) {
+	// TODO(@facekapow): make this a proper uniform RNG
+	// (actually, the whole RNG system needs to be fixed)
+	//
+	// the current implementation for this function does at least satisfy the requirement that the value be
+	// between 0 and the upper bound, but i wouldn't say the number it generates has been "uniformly generated"
+
+	uint64_t tmp = 0;
+	ccrng_generate(rng, sizeof(tmp), &tmp);
+	*rand = tmp % bound;
+	return 0;
+};

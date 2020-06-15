@@ -40,4 +40,7 @@ struct ccrng_state {
 
 #define ccrng_generate(ctx, outlen, out) ((ctx)->generate((ctx), (outlen), (out)))
 
+/* Generate a random value in [0, bound) */
+int ccrng_uniform(struct ccrng_state *rng, uint64_t bound, uint64_t *rand);
+
 #endif /* _CORECRYPTO_CCRNG_H_ */
