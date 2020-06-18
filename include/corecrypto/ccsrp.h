@@ -34,11 +34,21 @@ struct ccsrp_ctx_body {
     cc_unit              ccn[];
 } __attribute__((aligned(16)));
 
+#if CORECRYPTO_USE_TRANSPARENT_UNION
 typedef union {
     ccsrp_ctx *_full;
     struct ccsrp_ctx_header *hdr;
     struct ccsrp_ctx_body *body;
 } __attribute__((transparent_union)) ccsrp_ctx_t;
+
+#define CCSRP_CTX_T_HDR(ctx) ((ctx).hdr)
+#define CCSRP_CTX_T_BODY(ctx) ((ctx).body)
+#else
+typedef ccsrp_ctx* ccsrp_ctx_t;
+
+#define CCSRP_CTX_T_HDR(ctx) ((struct ccsrp_ctx_header*)(ctx))
+#define CCSRP_CTX_T_BODY(ctx) ((struct ccsrp_ctx_body*)(ctx))
+#endif
 
 #define ccsrp_gpbuf_size(_gp_) (ccdh_ccn_size(_gp_)*3)
 #define ccsrp_dibuf_size(_di_) ((_di_)->output_size*3)
@@ -49,14 +59,14 @@ typedef union {
 #define ccsrp_ctx_decl(_di_, _gp_, _name_) \
     cc_ctx_decl(ccsrp_ctx, ccsrp_sizeof_srp(_di_,_gp_), _name_)
 
-#define ccsrp_ctx_gp(KEY)   (((ccsrp_ctx_t)(KEY)).hdr->gp)
-#define ccsrp_ctx_di(KEY)   (((ccsrp_ctx_t)(KEY)).hdr->di)
-#define ccsrp_ctx_zp(KEY)   (ccsrp_ctx_gp(KEY).zp)
+#define ccsrp_ctx_gp(KEY)   (CCSRP_CTX_T_HDR((ccsrp_ctx_t)(KEY))->gp)
+#define ccsrp_ctx_di(KEY)   (CCSRP_CTX_T_HDR((ccsrp_ctx_t)(KEY))->di)
+#define ccsrp_ctx_zp(KEY)   (CCDH_CONST_GP_T_ZP(ccsrp_ctx_gp(KEY)))
 #define ccsrp_ctx_gp_g(KEY)   (ccdh_gp_g(ccsrp_ctx_gp(KEY)))
 #define ccsrp_ctx_gp_l(KEY)   (ccdh_gp_l(ccsrp_ctx_gp(KEY)))
 #define ccsrp_ctx_n(KEY)      (ccdh_gp_n(ccsrp_ctx_gp(KEY)))
 #define ccsrp_ctx_prime(KEY)  (ccdh_gp_prime(ccsrp_ctx_gp(KEY)))
-#define ccsrp_ctx_ccn(KEY)  (((ccsrp_ctx_t)(KEY)).hdr->ccn)
+#define ccsrp_ctx_ccn(KEY)  (CCSRP_CTX_T_HDR((ccsrp_ctx_t)(KEY))->ccn)
 #define ccsrp_ctx_pki_key(KEY,_N_) (ccsrp_ctx_ccn(KEY) + ccsrp_ctx_n(KEY) * _N_)
 #define ccsrp_ctx_public(KEY)  (ccsrp_ctx_pki_key(KEY,0))
 #define ccsrp_ctx_private(KEY)  (ccsrp_ctx_pki_key(KEY,1))
@@ -73,10 +83,10 @@ typedef union {
 
 CC_INLINE void
 ccsrp_ctx_init(ccsrp_ctx_t srp, const struct ccdigest_info *di, ccsrp_const_gp_t gp) {
-    cc_zero(ccsrp_sizeof_srp(di, gp),srp.hdr);
-    srp.hdr->di = di;
-    srp.hdr->gp = gp;
-    srp.hdr->flags.authenticated = false;
+    cc_zero(ccsrp_sizeof_srp(di, gp), CCSRP_CTX_T_HDR(srp));
+    CCSRP_CTX_T_HDR(srp)->di = di;
+    CCSRP_CTX_T_HDR(srp)->gp = gp;
+    CCSRP_CTX_T_HDR(srp)->flags.authenticated = false;
 }
 
 #define CCSRP_ERROR_DEFAULT                 CCDH_ERROR_DEFAULT
@@ -139,12 +149,12 @@ ccsrp_client_verify_session(ccsrp_ctx_t srp, const uint8_t *HAMK_bytes);
 CC_INLINE bool
 ccsrp_client_set_noUsernameInX(ccsrp_ctx_t srp, bool flag)
 {
-    return srp.hdr->flags.noUsernameInX = !!flag;
+    return CCSRP_CTX_T_HDR(srp)->flags.noUsernameInX = !!flag;
 }
 
 CC_INLINE bool
 ccsrp_is_authenticated(ccsrp_ctx_t srp) {
-	return srp.hdr->flags.authenticated;
+	return CCSRP_CTX_T_HDR(srp)->flags.authenticated;
 }
 
 

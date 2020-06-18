@@ -13,6 +13,7 @@ cc_aligned_struct(16) ccrsa_full_ctx;
 cc_aligned_struct(16) ccrsa_priv_ctx;
 cc_aligned_struct(16) ccrsa_pub_ctx;
 
+#if CORECRYPTO_USE_TRANSPARENT_UNION
 typedef union {
     cczp_t zp;
     ccrsa_priv_ctx *priv;
@@ -30,21 +31,48 @@ typedef union {
     ccrsa_full_ctx_t full_t;
 } ccrsa_pub_ctx_t __attribute__((transparent_union));
 
+#define CCRSA_PRIV_CTX_T_ZP(ctx) ((ctx).zp)
+#define CCRSA_PRIV_CTX_T_PRIV(ctx) ((ctx).priv)
+
+#define CCRSA_FULL_CTX_T_ZP(ctx) ((ctx).zp)
+#define CCRSA_FULL_CTX_T_FULL(ctx) ((ctx).full)
+
+#define CCRSA_PUB_CTX_T_ZP(ctx) ((ctx).zp)
+#define CCRSA_PUB_CTX_T_PUB(ctx) ((ctx).pub)
+#define CCRSA_PUB_CTX_T_FULL(ctx) ((ctx).full)
+#define CCRSA_PUB_CTX_T_FULL_T(ctx) ((ctx).full_t)
+#else
+typedef ccrsa_priv_ctx* ccrsa_priv_ctx_t;
+typedef ccrsa_full_ctx* ccrsa_full_ctx_t;
+typedef ccrsa_pub_ctx* ccrsa_pub_ctx_t;
+
+#define CCRSA_PRIV_CTX_T_ZP(ctx) ((cczp_t)(ctx))
+#define CCRSA_PRIV_CTX_T_PRIV(ctx) ((ccrsa_priv_ctx*)(ctx))
+
+#define CCRSA_FULL_CTX_T_ZP(ctx) ((cczp_t)(ctx))
+#define CCRSA_FULL_CTX_T_FULL(ctx) ((ccrsa_full_ctx*)(ctx))
+
+#define CCRSA_PUB_CTX_T_ZP(ctx) ((cczp_t)(ctx))
+#define CCRSA_PUB_CTX_T_PUB(ctx) ((ccrsa_pub_ctx*)(ctx))
+#define CCRSA_PUB_CTX_T_FULL(ctx) ((ccrsa_full_ctx*)(ctx))
+#define CCRSA_PUB_CTX_T_FULL_T(ctx) ((ccrsa_full_ctx_t)(ctx))
+#endif
+
 // Macros
 
-#define ccrsa_ctx_zm(_ctx_)        (((ccrsa_pub_ctx_t)(_ctx_)).zp)
-#define ccrsa_ctx_n(_ctx_)         (ccrsa_ctx_zm(_ctx_).zp->n)
-#define ccrsa_ctx_m(_ctx_)         (ccrsa_ctx_zm(_ctx_).prime->ccn)
+#define ccrsa_ctx_zm(_ctx_)        (CCRSA_PUB_CTX_T_ZP((ccrsa_pub_ctx_t)(_ctx_)))
+#define ccrsa_ctx_n(_ctx_)         (CCZP_T_ZP(ccrsa_ctx_zm(_ctx_))->n)
+#define ccrsa_ctx_m(_ctx_)         (CCZP_T_PRIME(ccrsa_ctx_zm(_ctx_))->ccn)
 #define ccrsa_ctx_e(_ctx_)         (ccrsa_ctx_m(_ctx_) + 2 * ccrsa_ctx_n(_ctx_) + 1)
 #define ccrsa_ctx_d(_ctx_)         (ccrsa_ctx_m(((ccrsa_full_ctx_t)_ctx_)) + 3 * ccrsa_ctx_n(_ctx_) + 1)
 
-#define ccrsa_ctx_private_zq(PRIVK)   ((cczp_t)(((ccrsa_priv_ctx_t)(PRIVK)).zp.prime->ccn + 2 * ccrsa_ctx_private_zp(PRIVK).zp->n + 1))
+#define ccrsa_ctx_private_zq(PRIVK)   ((cczp_t)(CCZP_T_PRIME(CCRSA_PRIV_CTX_T_ZP((ccrsa_priv_ctx_t)(PRIVK)))->ccn + 2 * CCZP_T_ZP(ccrsa_ctx_private_zp(PRIVK))->n + 1))
 #define ccrsa_pub_ctx_size(_size_)   (sizeof(struct cczp) + CCN_UNIT_SIZE + 3 * (_size_))
-#define ccrsa_ctx_private_zp(PRIVK)   (((ccrsa_priv_ctx_t)(PRIVK)).zp)
-#define ccrsa_ctx_private_dq(PRIVK)   (((ccrsa_priv_ctx_t)(PRIVK)).zp.prime->ccn + 5 * ccrsa_ctx_private_zp(PRIVK).zp->n + 2 + ccn_nof_size(sizeof(struct cczp)))
-#define ccrsa_ctx_private_qinv(PRIVK) (((ccrsa_priv_ctx_t)(PRIVK)).zp.prime->ccn + 6 * ccrsa_ctx_private_zp(PRIVK).zp->n + 2 + ccn_nof_size(sizeof(struct cczp)))
+#define ccrsa_ctx_private_zp(PRIVK)   (CCRSA_PRIV_CTX_T_ZP((ccrsa_priv_ctx_t)(PRIVK)))
+#define ccrsa_ctx_private_dq(PRIVK)   (CCZP_T_PRIME(CCRSA_PRIV_CTX_T_ZP((ccrsa_priv_ctx_t)(PRIVK)))->ccn + 5 * CCZP_T_ZP(ccrsa_ctx_private_zp(PRIVK))->n + 2 + ccn_nof_size(sizeof(struct cczp)))
+#define ccrsa_ctx_private_qinv(PRIVK) (CCZP_T_PRIME(CCRSA_PRIV_CTX_T_ZP((ccrsa_priv_ctx_t)(PRIVK)))->ccn + 6 * CCZP_T_ZP(ccrsa_ctx_private_zp(PRIVK))->n + 2 + ccn_nof_size(sizeof(struct cczp)))
 
-#define ccrsa_ctx_private_dp(PRIVK)   (((ccrsa_priv_ctx_t)(PRIVK)).zp.prime->ccn + 4 * ccrsa_ctx_private_zp(PRIVK).zp->n + 2 + ccn_nof_size(sizeof(struct cczp)))
+#define ccrsa_ctx_private_dp(PRIVK)   (CCZP_T_PRIME(CCRSA_PRIV_CTX_T_ZP((ccrsa_priv_ctx_t)(PRIVK)))->ccn + 4 * CCZP_T_ZP(ccrsa_ctx_private_zp(PRIVK))->n + 2 + ccn_nof_size(sizeof(struct cczp)))
 
 #define ccrsa_priv_ctx_size(_size_)  ((sizeof(struct cczp) + CCN_UNIT_SIZE) * 2 + 7 * ccn_sizeof((ccn_bitsof_size(_size_) / 2) + 1))
 
@@ -61,7 +89,7 @@ typedef union {
 
 CC_CONST CC_INLINE
 ccrsa_priv_ctx_t ccrsa_ctx_private(ccrsa_full_ctx_t fk) {
-    uint8_t *p = (uint8_t *)fk.full;
+    uint8_t *p = (uint8_t *)CCRSA_FULL_CTX_T_FULL(fk);
     size_t p_size = ccn_sizeof_n(ccrsa_ctx_n(fk));
     p += ccrsa_pub_ctx_size(p_size) + p_size;
     ccrsa_priv_ctx *priv = (ccrsa_priv_ctx *)p;

@@ -19,10 +19,20 @@ struct cchmac_ctx {
     uint8_t b[8];
 } CC_ALIGNED(8);
 
+#if CORECRYPTO_USE_TRANSPARENT_UNION
 typedef union {
     struct cchmac_ctx *hdr;
     ccdigest_ctx_t digest;
 } cchmac_ctx_t __attribute__((transparent_union));
+
+#define CCHMAC_CTX_T_HDR(ctx) ((ctx).hdr)
+#define CCHMAC_CTX_T_DIGEST(ctx) ((ctx).digest)
+#else
+typedef struct cchmac_ctx* cchmac_ctx_t;
+
+#define CCHMAC_CTX_T_HDR(ctx) ((struct cchmac_ctx*)(ctx))
+#define CCHMAC_CTX_T_DIGEST(ctx) ((ccdigest_ctx_t)(ctx))
+#endif
 
 #define cchmac_ctx_size(STATE_SIZE, BLOCK_SIZE)  (ccdigest_ctx_size(STATE_SIZE, BLOCK_SIZE) + (STATE_SIZE))
 #define cchmac_di_size(_di_)  (cchmac_ctx_size((_di_)->state_size, (_di_)->block_size))
@@ -35,24 +45,24 @@ typedef union {
 #define cchmac_di_clear(_di_, _name_) cchmac_ctx_clear((_di_)->state_size, (_di_)->block_size, _name_)
 
 /* Return a ccdigest_ctx_t which can be accesed with the macros in ccdigest.h */
-#define cchmac_digest_ctx(_di_, HC)    (((cchmac_ctx_t)(HC)).digest)
+#define cchmac_digest_ctx(_di_, HC)    (CCHMAC_CTX_T_DIGEST((cchmac_ctx_t)(HC)))
 
 /* Accesors for ostate fields, this is all cchmac_ctx_t adds to the ccdigest_ctx_t. */
-#define cchmac_ostate(_di_, HC)    ((struct ccdigest_state *)(((cchmac_ctx_t)(HC)).hdr->b + ccdigest_di_size(_di_)))
+#define cchmac_ostate(_di_, HC)    ((struct ccdigest_state *)(CCHMAC_CTX_T_HDR((cchmac_ctx_t)(HC))->b + ccdigest_di_size(_di_)))
 #define cchmac_ostate8(_di_, HC)   (ccdigest_u8(cchmac_ostate(_di_, HC)))
 #define cchmac_ostate32(_di_, HC)  (ccdigest_u32(cchmac_ostate(_di_, HC)))
 #define cchmac_ostate64(_di_, HC)  (ccdigest_u64(cchmac_ostate(_di_, HC)))
 #define cchmac_ostateccn(_di_, HC) (ccdigest_ccn(cchmac_ostate(_di_, HC)))
 
 /* Convenience accessors for ccdigest_ctx_t fields. */
-#define cchmac_istate(_di_, HC)    ccdigest_state(_di_, ((cchmac_ctx_t)(HC)).digest)
+#define cchmac_istate(_di_, HC)    ccdigest_state(_di_, CCHMAC_CTX_T_DIGEST((cchmac_ctx_t)(HC)))
 #define cchmac_istate8(_di_, HC)   ccdigest_u8(cchmac_istate(_di_, HC))
 #define cchmac_istate32(_di_, HC)  ccdigest_u32(cchmac_istate(_di_, HC))
 #define cchmac_istate64(_di_, HC)  ccdigest_u64(cchmac_istate(_di_, HC))
 #define cchmac_istateccn(_di_, HC) ccdigest_ccn(cchmac_istate(_di_, HC))
-#define cchmac_data(_di_, HC)      ccdigest_data(_di_, ((cchmac_ctx_t)(HC)).digest)
-#define cchmac_num(_di_, HC)       ccdigest_num(_di_, ((cchmac_ctx_t)(HC)).digest)
-#define cchmac_nbits(_di_, HC)     ccdigest_nbits(_di_, ((cchmac_ctx_t)(HC)).digest)
+#define cchmac_data(_di_, HC)      ccdigest_data(_di_, CCHMAC_CTX_T_DIGEST((cchmac_ctx_t)(HC)))
+#define cchmac_num(_di_, HC)       ccdigest_num(_di_, CCHMAC_CTX_T_DIGEST((cchmac_ctx_t)(HC)))
+#define cchmac_nbits(_di_, HC)     ccdigest_nbits(_di_, CCHMAC_CTX_T_DIGEST((cchmac_ctx_t)(HC)))
 
 void cchmac_init(const struct ccdigest_info *di, cchmac_ctx_t ctx,
                  size_t key_len, const void *key);

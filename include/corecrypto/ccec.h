@@ -11,6 +11,7 @@ cc_aligned_struct(8) ccec_projective_point;
 
 // Structs/unions
 
+#if CORECRYPTO_USE_TRANSPARENT_UNION
 typedef union {
     struct ccec_point_hdr *hdr;
     ccec_projective_point *_p;
@@ -20,6 +21,20 @@ typedef union {
     const struct cczp   *zp;
     const struct cczp_prime *prime;
 } __attribute__((transparent_union)) ccec_const_cp_t;
+
+#define CCEC_PROJECTIVE_POINT_T_HDR(point) ((point).hdr)
+
+#define CCEC_CONST_CP_T_ZP(cp) ((cp).zp)
+#define CCEC_CONST_CP_T_PRIME(cp) ((cp).prime)
+#else
+typedef ccec_projective_point* ccec_projective_point_t;
+typedef const struct cczp* ccec_const_cp_t;
+
+#define CCEC_PROJECTIVE_POINT_T_HDR(point) ((struct ccec_point_hdr*)(point))
+
+#define CCEC_CONST_CP_T_ZP(cp) ((const struct cczp*)(cp))
+#define CCEC_CONST_CP_T_PRIME(cp) ((const struct cczp_prime*)(cp))
+#endif
 
 struct ccec_ctx_header {
     ccec_const_cp_t      cp;
@@ -35,6 +50,7 @@ typedef struct ccec_full_ctx {
     struct ccec_ctx_header  hdr;
 } __attribute__((aligned(16))) ccec_full_ctx;
 
+#if CORECRYPTO_USE_TRANSPARENT_UNION
 typedef union {
     ccec_full_ctx *_full;
     struct ccec_ctx_header *hdr;
@@ -42,10 +58,22 @@ typedef union {
     struct ccec_ctx_public *pub;
 } __attribute__((transparent_union)) ccec_full_ctx_t;
 
+#define CCEC_FULL_CTX_HDR(ctx) ((ctx).hdr)
+#define CCEC_FULL_CTX_BODY(ctx) ((ctx).body)
+#define CCEC_FULL_CTX_PUB(ctx) ((ctx).pub)
+#else
+typedef ccec_full_ctx* ccec_full_ctx_t;
+
+#define CCEC_FULL_CTX_HDR(ctx) ((struct ccec_ctx_header*)(ctx))
+#define CCEC_FULL_CTX_BODY(ctx) ((struct ccec_ctx_body*)(ctx))
+#define CCEC_FULL_CTX_PUB(ctx) ((struct ccec_ctx_public*)(ctx))
+#endif
+
 typedef struct ccec_pub_ctx {
     struct ccec_ctx_header  hdr;
 } __attribute__((aligned(16))) ccec_pub_ctx;
 
+#if CORECRYPTO_USE_TRANSPARENT_UNION
 typedef union {
     ccec_pub_ctx *_pub;
     ccec_full_ctx *_full;
@@ -55,6 +83,17 @@ typedef union {
     ccec_full_ctx_t fullt;
 } __attribute__((transparent_union)) ccec_pub_ctx_t;
 
+#define CCEC_PUB_CTX_HDR(ctx) ((ctx).hdr)
+#define CCEC_PUB_CTX_BODY(ctx) ((ctx).body)
+#define CCEC_PUB_CTX_PUB(ctx) ((ctx).pub)
+#else
+typedef ccec_pub_ctx* ccec_pub_ctx_t;
+
+#define CCEC_PUB_CTX_HDR(ctx) ((struct ccec_ctx_header*)(ctx))
+#define CCEC_PUB_CTX_BODY(ctx) ((struct ccec_ctx_body*)(ctx))
+#define CCEC_PUB_CTX_PUB(ctx) ((struct ccec_ctx_public*)(ctx))
+#endif
+
 struct ccec_ctx_body {
     struct ccec_ctx_header  hdr;
     cc_unit              ccn[];
@@ -63,7 +102,7 @@ struct ccec_ctx_body {
 // Functions needed by the following macros
 CC_CONST CC_INLINE
 cc_size ccec_cp_n(ccec_const_cp_t cp) {
-    return cp.zp->n;
+    return CCEC_CONST_CP_T_ZP(cp)->n;
 }
 
 CC_CONST CC_INLINE
@@ -75,8 +114,8 @@ size_t ccec_compact_import_pub_size(size_t in_len);
 
 // Macros
 #define ccec_pub_ctx_size(_size_)   (sizeof(struct ccec_ctx_header) + 3 * (_size_))
-#define ccec_ctx_cp(KEY)     (((ccec_pub_ctx_t)(KEY)).hdr->cp)
-#define ccec_cp_prime_bitlen(CP) (ccn_bitlen((CP).zp->n, (CP).prime->ccn))
+#define ccec_ctx_cp(KEY)     (CCEC_PUB_CTX_HDR((ccec_pub_ctx_t)(KEY))->cp)
+#define ccec_cp_prime_bitlen(CP) (ccn_bitlen(CCEC_CONST_CP_T_ZP(CP)->n, CCEC_CONST_CP_T_PRIME(CP)->ccn))
 #define ccec_ctx_bitlen(KEY) (ccec_cp_prime_bitlen(ccec_ctx_cp(KEY)))
 #define ccec_full_ctx_size(_size_)  (sizeof(struct ccec_ctx_header) + 4 * (_size_))
 #define ccec_full_ctx_decl(_size_, _name_)  cc_ctx_decl(ccec_full_ctx, ccec_full_ctx_size(_size_), _name_)
@@ -85,16 +124,18 @@ size_t ccec_compact_import_pub_size(size_t in_len);
 #define ccec_pub_ctx_decl_cp(_cp_, _name_)  ccec_pub_ctx_decl(ccec_ccn_size(_cp_), _name_)
 #define ccec_full_ctx_clear(_size_, _name_) cc_clear(ccec_full_ctx_size(_size_), _name_)
 #define ccec_full_ctx_clear_cp(_cp_, _name_) ccec_full_ctx_clear(ccec_ccn_size(_cp_), _name_)
-#define ccec_ctx_n(KEY)      (((ccec_pub_ctx_t)(KEY)).hdr->cp.zp->n)
+#define ccec_ctx_n(KEY)      (CCEC_CONST_CP_T_ZP(CCEC_PUB_CTX_HDR((ccec_pub_ctx_t)(KEY))->cp)->n)
 #define ccec_cp_prime_size(CP) ((ccec_cp_prime_bitlen(CP)+7)/8)
 #define ccec_ctx_size(KEY) (ccec_cp_prime_size(ccec_ctx_cp(KEY)))
 
-#define ccec_ctx_x(KEY)  (((ccec_pub_ctx_t)(KEY)).body->ccn)
-#define ccec_ctx_y(KEY)  (((ccec_pub_ctx_t)(KEY)).body->ccn + 1 * ccec_ctx_n(KEY))
-#define ccec_ctx_z(KEY)  (((ccec_pub_ctx_t)(KEY)).body->ccn + 2 * ccec_ctx_n(KEY))
-#define ccec_ctx_k(KEY)      (((ccec_full_ctx_t)(KEY)).body->ccn + 3 * ccec_ctx_n(KEY))
+#define ccec_ctx_x(KEY)  (CCEC_PUB_CTX_BODY((ccec_pub_ctx_t)(KEY))->ccn)
+#define ccec_ctx_y(KEY)  (CCEC_PUB_CTX_BODY((ccec_pub_ctx_t)(KEY))->ccn + 1 * ccec_ctx_n(KEY))
+#define ccec_ctx_z(KEY)  (CCEC_PUB_CTX_BODY((ccec_pub_ctx_t)(KEY))->ccn + 2 * ccec_ctx_n(KEY))
+#define ccec_ctx_k(KEY)      (CCEC_FULL_CTX_BODY((ccec_full_ctx_t)(KEY))->ccn + 3 * ccec_ctx_n(KEY))
 
-#define ccec_ctx_point(KEY)    ((ccec_projective_point_t)(((ccec_pub_ctx_t)(KEY)).pub->point))
+#define ccec_ctx_point(KEY)    ((ccec_projective_point_t)(CCEC_PUB_CTX_PUB((ccec_pub_ctx_t)(KEY))->point))
+
+#define ccec_ctx_pub(KEY) ((ccec_pub_ctx_t)(KEY))
 
 // Functions
 CC_INLINE CC_CONST CC_NONNULL_TU((2))
@@ -235,7 +276,7 @@ const ccec_const_cp_t ccec_curve_for_length_lookup(size_t keylen, ...);
 
 CC_INLINE
 void ccec_ctx_init(ccec_const_cp_t cp, ccec_pub_ctx_t key) {
-    key.hdr->cp = cp;
+    CCEC_PUB_CTX_HDR(key)->cp = cp;
 }
 
 size_t ccec_compact_import_pub_size(size_t in_len);

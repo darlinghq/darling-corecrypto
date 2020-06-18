@@ -26,9 +26,17 @@ struct ccdigest_ctx {
     } state;
 } CC_ALIGNED(8);
 
+#if CORECRYPTO_USE_TRANSPARENT_UNION
 typedef union {
     struct ccdigest_ctx *hdr;
 } ccdigest_ctx_t __attribute__((transparent_union));
+
+#define CCDIGEST_CTX_T_HDR(ctx) ((ctx).hdr)
+#else
+typedef struct ccdigest_ctx* ccdigest_ctx_t;
+
+#define CCDIGEST_CTX_T_HDR(ctx) ((struct ccdigest_ctx*)(ctx))
+#endif
 
 struct ccdigest_state {
     union {
@@ -100,7 +108,7 @@ struct ccdigest_info {
 
 /* Digest context field accessors.  Consider the implementation private. */
 #if CORECRYPTO_USE_TRANSPARENT_UNION
-#define ccdigest_state(_di_, _ctx_)      ((struct ccdigest_state *)(&((ccdigest_ctx_t)(_ctx_)).hdr->state.u8 + sizeof(uint64_t)))
+#define ccdigest_state(_di_, _ctx_)      ((struct ccdigest_state *)(&CCDIGEST_CTX_T_HDR((ccdigest_ctx_t)(_ctx_))->state.u8 + sizeof(uint64_t)))
 #else
 #define ccdigest_state(_di_, _ctx_)      ((struct ccdigest_state *)(&((ccdigest_ctx_t)(_ctx_))->state.u8 + sizeof(uint64_t)))
 #endif
@@ -111,9 +119,9 @@ struct ccdigest_info {
 #define ccdigest_state_ccn(_di_, _ctx_)  ccdigest_ccn(ccdigest_state((_di_), (_ctx_)))
 
 #if CORECRYPTO_USE_TRANSPARENT_UNION
-#define ccdigest_nbits(_di_, _ctx_)      (((uint64_t *)(&((ccdigest_ctx_t)(_ctx_)).hdr->state.u8))[0])
-#define ccdigest_data(_di_, _ctx_)       (&((ccdigest_ctx_t)(_ctx_)).hdr->state.u8 + (_di_)->state_size + sizeof(uint64_t))
-#define ccdigest_num(_di_, _ctx_)        (((unsigned int *)(&((ccdigest_ctx_t)(_ctx_)).hdr->state.u8 + (_di_)->state_size + sizeof(uint64_t) + (_di_)->block_size))[0])
+#define ccdigest_nbits(_di_, _ctx_)      (((uint64_t *)(&CCDIGEST_CTX_T_HDR((ccdigest_ctx_t)(_ctx_))->state.u8))[0])
+#define ccdigest_data(_di_, _ctx_)       (&CCDIGEST_CTX_T_HDR((ccdigest_ctx_t)(_ctx_))->state.u8 + (_di_)->state_size + sizeof(uint64_t))
+#define ccdigest_num(_di_, _ctx_)        (((unsigned int *)(&CCDIGEST_CTX_T_HDR((ccdigest_ctx_t)(_ctx_))->state.u8 + (_di_)->state_size + sizeof(uint64_t) + (_di_)->block_size))[0])
 #else
 #define ccdigest_nbits(_di_, _ctx_)      (((uint64_t *)(&((ccdigest_ctx_t)(_ctx_))->state.u8))[0])
 #define ccdigest_data(_di_, _ctx_)       (&((ccdigest_ctx_t)(_ctx_))->state.u8 + (_di_)->state_size + sizeof(uint64_t))
@@ -122,10 +130,10 @@ struct ccdigest_info {
 
 #if CORECRYPTO_USE_TRANSPARENT_UNION
 /* Digest state field accessors.  Consider the implementation private. */
-#define ccdigest_u8(_state_)             (&((ccdigest_state_t)(_state_)).hdr->state.u8)
-#define ccdigest_u32(_state_)            (&((ccdigest_state_t)(_state_)).hdr->state.u32)
-#define ccdigest_u64(_state_)            (&((ccdigest_state_t)(_state_)).hdr->state.u64)
-#define ccdigest_ccn(_state_)            (&((ccdigest_state_t)(_state_)).hdr->state.ccn)
+#define ccdigest_u8(_state_)             (&CCDIGEST_CTX_T_HDR((ccdigest_state_t)(_state_))->state.u8)
+#define ccdigest_u32(_state_)            (&CCDIGEST_CTX_T_HDR((ccdigest_state_t)(_state_))->state.u32)
+#define ccdigest_u64(_state_)            (&CCDIGEST_CTX_T_HDR((ccdigest_state_t)(_state_))->state.u64)
+#define ccdigest_ccn(_state_)            (&CCDIGEST_CTX_T_HDR((ccdigest_state_t)(_state_))->state.ccn)
 #else
 /* Digest state field accessors.  Consider the implementation private. */
 #define ccdigest_u8(_state_)             (&((ccdigest_state_t)(_state_))->state.u8)
