@@ -203,4 +203,6 @@ void ccdh_ctx_init(ccdh_const_gp_t gp, ccdh_pub_ctx_t key) {
 CC_NONNULL_TU((1)) CC_NONNULL((3, 4))
 int ccdh_init_gp(ccdh_gp_t gp, cc_size n, cc_unit *p, cc_unit *g, cc_size l);
 
+int ccdh_compute_shared_secret(ccdh_full_ctx_t ctx, ccdh_pub_ctx_t pub, size_t* len, const void* key, struct ccrng_state* rng);
+
 #endif

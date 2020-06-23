@@ -186,7 +186,7 @@ fail:
 /*
  * Take modulus and exponent and put them next to each other in the public key
  */
-void ccrsa_init_pub(ccrsa_pub_ctx_t key, const cc_unit* modulus, const cc_unit* e) {
+int ccrsa_init_pub(ccrsa_pub_ctx_t key, const cc_unit* modulus, const cc_unit* e) {
 	const cc_size mod_n = ccrsa_ctx_n(key);
 	cczp_t zp = ccrsa_ctx_zm(key);
 
@@ -200,6 +200,8 @@ void ccrsa_init_pub(ccrsa_pub_ctx_t key, const cc_unit* modulus, const cc_unit* 
 	// this will attach an implementation of `mod_prime` to the ZP structure
 	// and also calculate the reciprocal of the modulus and place it in the ZP structure
 	cczp_init(zp);
+
+	return CCERR_OK;
 }
 
 int
@@ -284,3 +286,23 @@ int ccrsa_sign_pkcs1v15(ccrsa_full_ctx_t key, const uint8_t *oid,
 {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
+
+int ccrsa_make_priv(ccrsa_full_ctx_t key, size_t expLen, const void* exp, size_t pLen, const void* p, size_t qLen, const void* q) {
+	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	return -1;
+};
+
+int ccrsa_make_pub(ccrsa_pub_ctx_t key, size_t expLen, const void* exp, size_t modLen, const void* mod) {
+	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	return -1;
+};
+
+int ccrsa_sign_pss(ccrsa_full_ctx_t key, const struct ccdigest_info* di1, const struct ccdigest_info* di2, size_t saltLen, struct ccrng_state* rng, size_t hashLen, const void* hash, size_t signedDataLen, void* signedData) {
+	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	return -1;
+};
+
+int ccrsa_verify_pss(ccrsa_full_ctx_t key, const struct ccdigest_info* di1, const struct ccdigest_info* di2, size_t hashLen, const void* hash, size_t signedDataLen, const void* signedData, size_t saltLen, bool* valid) {
+	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	return -1;
+};

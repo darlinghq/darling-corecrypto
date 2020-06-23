@@ -582,6 +582,10 @@ void ccec_compact_export(const int fullkey, void *out, ccec_full_ctx_t key) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
 
+void ccec_compact_export_pub(void* out, ccec_pub_ctx_t key) {
+	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+};
+
 size_t ccec_x963_import_pub_size(size_t in_len) {
 	return ccn_bitsof_size((in_len - 1) / 2);
 };
@@ -1013,6 +1017,26 @@ int ccec_generate_key_deterministic(ccec_const_cp_t arg0, int arg1, unsigned cha
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 	return -1;
 }
+
+size_t ccec_diversify_min_entropy_len(ccec_const_cp_t cp) {
+	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	return -1;
+};
+
+int ccec_diversify_priv_twin(ccec_const_cp_t cp, cc_unit* priv, size_t entropyLen, void* entropy, struct ccrng_state* masking_rng, ccec_full_ctx_t key) {
+	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	return -1;
+};
+
+int ccec_diversify_pub_twin(ccec_const_cp_t cp, ccec_pub_ctx_t pub, size_t entropyLen, void* entropy, struct ccrng_state* masking_rng, ccec_pub_ctx_t key) {
+	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	return -1;
+};
+
+int ccec_validate_pub(ccec_pub_ctx_t pub) {
+	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	return -1;
+};
 
 struct ccec_rfc6637_wrap
 {

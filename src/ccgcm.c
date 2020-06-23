@@ -110,7 +110,7 @@ int ccgcm_internal_set_iv(ccgcm_ctx* ctx, size_t iv_size, const void* iv) {
 		state->mode = CCGCM_MODE_IV;
 
 	if (state->mode != CCGCM_MODE_IV)
-		return -1;
+		return CCMODE_INVALID_CALL_SEQUENCE;
 
 	for (size_t i = 0; i < iv_size; ++i) {
 		const size_t current_block_index = 15 - (state->total_iv_length % 16);
@@ -147,7 +147,7 @@ int ccgcm_internal_gmac(ccgcm_ctx* ctx, size_t buf_len, const void* in) {
 	}
 
 	if (state->mode != CCGCM_MODE_AAD)
-		return -1;
+		return CCMODE_INVALID_CALL_SEQUENCE;
 
 	for (size_t i = 0; i < buf_len; ++i) {
 		const size_t current_block_index = 15 - (state->total_aad_length % 16);
@@ -190,7 +190,7 @@ int ccgcm_internal_gcm(ccgcm_ctx* ctx, size_t buf_len, const void* in, void* out
 	}
 
 	if (state->mode != CCGCM_MODE_CIPHERTEXT)
-		return -1;
+		return CCMODE_INVALID_CALL_SEQUENCE;
 
 	for (size_t i = 0; i < buf_len; ++i) {
 		const size_t current_block_index = 15 - (state->total_cipher_length % 16);
@@ -236,7 +236,7 @@ int ccgcm_internal_finalize(ccgcm_ctx* ctx, size_t tag_size, void* tag) {
 	}
 
 	if (state->mode != CCGCM_MODE_FINALIZE)
-		return -1;
+		return CCMODE_INVALID_CALL_SEQUENCE;
 
 	const size_t aad_bits = state->total_aad_length * 8;
 	const size_t cipher_bits = state->total_cipher_length * 8;

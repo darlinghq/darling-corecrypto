@@ -60,6 +60,7 @@ set(corecrypto_sources
 		src/ccaes_extra.c
 		src/ccgcm.c
 		src/ccsrp.c
+		src/ccwrap_priv.c
 )
 
 set(DYLIB_INSTALL_NAME "/usr/lib/system/libcorecrypto.dylib")

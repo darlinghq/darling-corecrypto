@@ -50,6 +50,6 @@ int ccgcm_inc_iv(const struct ccmode_gcm* mode, ccgcm_ctx* ctx, void* iv) {
 	return 0;
 };
 
-int ccgcm_set_iv_legacy(const struct ccmode_gcm *arg0, ccgcm_ctx *arg1, int c, const void *data) {
+int ccgcm_set_iv_legacy(const struct ccmode_gcm *mode, ccgcm_ctx *ctx, size_t iv_nbytes, const void *iv) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
-}
+};

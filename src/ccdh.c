@@ -31,3 +31,8 @@ void ccdh_export_pub(ccdh_pub_ctx_t key, void *out) {
 int ccdh_init_gp(ccdh_gp_t gp, cc_size n, cc_unit *p, cc_unit *g, cc_size l) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
+
+int ccdh_compute_shared_secret(ccdh_full_ctx_t ctx, ccdh_pub_ctx_t pub, size_t* len, const void* key, struct ccrng_state* rng) {
+	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	return -1;
+};

@@ -136,6 +136,7 @@ size_t ccec_compact_import_pub_size(size_t in_len);
 #define ccec_ctx_point(KEY)    ((ccec_projective_point_t)(CCEC_PUB_CTX_PUB((ccec_pub_ctx_t)(KEY))->point))
 
 #define ccec_ctx_pub(KEY) ((ccec_pub_ctx_t)(KEY))
+#define ccec_ctx_public(KEY) (ccec_ctx_pub(KEY))
 
 // Functions
 CC_INLINE CC_CONST CC_NONNULL_TU((2))
@@ -214,6 +215,8 @@ int ccec_compact_generate_key(ccec_const_cp_t cp,  struct ccrng_state *rng,
                               ccec_full_ctx_t key);
 CC_NONNULL_TU((3)) CC_NONNULL2
 void ccec_compact_export(const int fullkey, void *out, ccec_full_ctx_t key);
+
+void ccec_compact_export_pub(void* out, ccec_pub_ctx_t key);
 
 CC_INLINE CC_CONST CC_NONNULL_TU((2))
 size_t ccec_compact_export_size(const int fullkey, ccec_full_ctx_t key){
@@ -337,5 +340,12 @@ int ccec_compact_import_priv(ccec_const_cp_t cp, size_t in_len, const uint8_t *i
 int ccec_generate_key_deterministic(ccec_const_cp_t arg0, int arg1, unsigned char *arg2, struct ccrng_state *arg3, int arg4, int arg5);
 
 #define CCEC_GENKEY_DETERMINISTIC_COMPACT 0
+
+size_t ccec_diversify_min_entropy_len(ccec_const_cp_t cp);
+
+int ccec_diversify_priv_twin(ccec_const_cp_t cp, cc_unit* priv, size_t entropyLen, void* entropy, struct ccrng_state* masking_rng, ccec_full_ctx_t key);
+int ccec_diversify_pub_twin(ccec_const_cp_t cp, ccec_pub_ctx_t pub, size_t entropyLen, void* entropy, struct ccrng_state* masking_rng, ccec_pub_ctx_t key);
+
+int ccec_validate_pub(ccec_pub_ctx_t pub);
 
 #endif

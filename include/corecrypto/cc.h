@@ -14,6 +14,7 @@
 #include <corecrypto/cc_config.h>
 #include <string.h>
 #include <stdint.h>
+#include <corecrypto/cc_error.h>
 
 /* Manage asserts here because a few functions in header public files do use asserts */
 #define cc_assert(x) assert(x)

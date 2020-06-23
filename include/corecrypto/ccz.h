@@ -65,7 +65,7 @@ CC_NONNULL_ALL
 void ccz_sqrmod(ccz *r, const ccz *s, const ccz *t);
 
 CC_NONNULL_ALL
-void ccz_invmod(ccz *r, const ccz *s, const ccz *t);
+int ccz_invmod(ccz *r, const ccz *s, const ccz *t);
 
 CC_NONNULL_ALL
 void ccz_expmod(ccz *r, const ccz *s, const ccz *t, const ccz *u);

@@ -66,9 +66,10 @@ void ccz_sqrmod(ccz *r, const ccz *s, const ccz *t)
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
 
-void ccz_invmod(ccz *r, const ccz *s, const ccz *t)
+int ccz_invmod(ccz *r, const ccz *s, const ccz *t)
 {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	return -1;
 }
 
 void ccz_expmod(ccz *r, const ccz *s, const ccz *t, const ccz *u)
