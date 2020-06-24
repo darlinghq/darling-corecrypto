@@ -452,4 +452,8 @@ void cc_mux2p(int s, void **r_true, void **r_false, const void *a, const void *b
 
 int cc_is_compiled_with_tu(void);
 
+void cc_atfork_child();
+void cc_atfork_parent();
+void cc_atfork_prepare();
+
 #endif /* _CORECRYPTO_CC_PRIV_H_ */
