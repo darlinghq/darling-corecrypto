@@ -81,6 +81,8 @@ add_circular(corecrypto FAT
 		libdispatch_shared
 )
 
+add_darling_static_library(corecrypto_static FAT SOURCES $<TARGET_OBJECTS:corecrypto_obj>)
+
 install(TARGETS corecrypto DESTINATION libexec/darling/usr/lib/system)
 
 if (ENABLE_TESTS)
