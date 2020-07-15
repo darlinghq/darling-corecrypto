@@ -128,7 +128,7 @@ CC_CONST CC_INLINE ccmod_prime_f *cczp_mod_prime(cczp_const_t zp)
 	return CCZP_CONST_T_ZP(zp)->mod_prime;
 }
 
-void cczp_init(cczp_t zp);
+int cczp_init(cczp_t zp);
 
 void cczp_mod(cczp_const_t zp, cc_unit *r, const cc_unit *s2n, cc_ws_t ws);
 

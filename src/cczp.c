@@ -23,13 +23,14 @@ void shift_units_left(cc_size n, cc_unit* result, const cc_unit* operand, cc_siz
 	}
 };
 
-void cczp_init(cczp_t zp) {
+int cczp_init(cczp_t zp) {
 	zp.zp->mod_prime = &cczp_mod;
 
 	const cc_unit* prime = cczp_prime(zp);
 	cc_size n = ccn_n(cczp_n(zp), prime);
 
 	ccn_make_recip(n, CCZP_RECIP(zp), prime);
+	return 0;
 }
 
 void cczp_mod(cczp_const_t zp, cc_unit* result, const cc_unit* operand, cc_ws_t ws) {

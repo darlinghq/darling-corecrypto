@@ -9,6 +9,7 @@
 #define ECIES_EPH_PUBKEY_IN_SHAREDINFO1      1
 #define ECIES_EXPORT_PUB_STANDARD            2
 #define ECIES_EXPORT_PUB_COMPACT             4
+#define ECIES_LEGACY_IV                      8 // is this right? someone please check
 
 typedef struct ccecies_gcm {
 	const struct ccdigest_info *di;
