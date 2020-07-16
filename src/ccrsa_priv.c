@@ -136,6 +136,16 @@ int ccrsa_emsa_pkcs1v15_verify(size_t emlen, uint8_t* em, size_t dgstlen, const 
 	return valid ? 0 : 1;
 }
 
+int ccrsa_emsa_pss_encode(const struct ccdigest_info* di1, const struct ccdigest_info* di2, size_t salt_len, const void* salt, size_t data_len, const void* data, size_t output_bits, void* output) {
+	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	return -1;
+};
+
+int ccrsa_emsa_pss_decode(const struct ccdigest_info* di1, const struct ccdigest_info* di2, size_t salt_len, size_t data_len, const void* data, size_t output_bits, void* output) {
+	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	return -1;
+};
+
 int ccrsa_eme_pkcs1v15_encode(struct ccrng_state *rng,
 		size_t r_size, cc_unit *r, size_t s_size,
 		const uint8_t *s)

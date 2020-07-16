@@ -58,6 +58,9 @@ int ccrsa_emsa_pkcs1v15_verify(size_t emlen, uint8_t *em,
 		               size_t dgstlen, const uint8_t *dgst,
 			       const uint8_t *oid);
 
+int ccrsa_emsa_pss_encode(const struct ccdigest_info* di1, const struct ccdigest_info* di2, size_t salt_len, const void* salt, size_t data_len, const void* data, size_t output_bits, void* output);
+int ccrsa_emsa_pss_decode(const struct ccdigest_info* di1, const struct ccdigest_info* di2, size_t salt_len, size_t data_len, const void* data, size_t output_bits, void* output);
+
 CC_NONNULL((1, 3, 5))
 int ccrsa_eme_pkcs1v15_encode(struct ccrng_state *rng,
 		size_t r_size, cc_unit *r, size_t s_size,
