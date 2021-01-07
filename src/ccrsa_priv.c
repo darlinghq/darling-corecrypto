@@ -82,10 +82,12 @@ int ccrsa_emsa_pkcs1v15_encode(size_t emlen, uint8_t* em, size_t dgstlen, const 
 	//
 	// we actually just calculate the sizes;
 	// we generate the encoded DER structure later on
-	size_t alg_info_seq_size = ccder_sizeof_oid(oid) + ccder_sizeof(CCDER_NULL, 0);
-	size_t digest_info_seq_size = ccder_sizeof(CCDER_CONSTRUCTED_SEQUENCE, alg_info_seq_size) + ccder_sizeof_raw_octet_string(dgstlen);
+	//
+	// `oid == NULL` is a special case where we don't DER encode anything at all; instead, the digest is longer and contains both MD5 and SHA1
+	size_t alg_info_seq_size = (oid == NULL) ? 0 : ccder_sizeof_oid(oid) + ccder_sizeof(CCDER_NULL, 0);
+	size_t digest_info_seq_size = (oid == NULL) ? 0 : ccder_sizeof(CCDER_CONSTRUCTED_SEQUENCE, alg_info_seq_size) + ccder_sizeof_raw_octet_string(dgstlen);
 	// this is a.k.a. `tLen`
-	size_t digest_info_size = ccder_sizeof(CCDER_CONSTRUCTED_SEQUENCE, digest_info_seq_size);
+	size_t digest_info_size = (oid == NULL) ? dgstlen : ccder_sizeof(CCDER_CONSTRUCTED_SEQUENCE, digest_info_seq_size);
 
 	// 3. If emLen < tLen + 11, output "intended encoded message length
   //    too short" and stop.
@@ -114,11 +116,14 @@ int ccrsa_emsa_pkcs1v15_encode(size_t emlen, uint8_t* em, size_t dgstlen, const 
 
 	memcpy(h, dgst, dgstlen);
 
-	ccder_encode_tl(CCDER_CONSTRUCTED_SEQUENCE, digest_info_seq_size, digest_info,
-		ccder_encode_tl(CCDER_CONSTRUCTED_SEQUENCE, alg_info_seq_size, digest_info,
-			ccder_encode_oid(oid, digest_info,
-			ccder_encode_tl(CCDER_NULL, 0, digest_info,
-		ccder_encode_tl(CCDER_OCTET_STRING, dgstlen, digest_info, h)))));
+	// we only encode stuff into DER when not using the special MD5 + SHA1 digest
+	if (oid != NULL) {
+		ccder_encode_tl(CCDER_CONSTRUCTED_SEQUENCE, digest_info_seq_size, digest_info,
+			ccder_encode_tl(CCDER_CONSTRUCTED_SEQUENCE, alg_info_seq_size, digest_info,
+				ccder_encode_oid(oid, digest_info,
+				ccder_encode_tl(CCDER_NULL, 0, digest_info,
+			ccder_encode_tl(CCDER_OCTET_STRING, dgstlen, digest_info, h)))));
+	}
 
 	return 0;
 }

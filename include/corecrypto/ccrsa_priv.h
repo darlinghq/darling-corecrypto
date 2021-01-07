@@ -48,12 +48,12 @@ int ccrsa_decrypt_oaep(ccrsa_full_ctx_t key,
 CC_NONNULL_TU((1,4,7)) CC_NONNULL((2, 3, 5, 6, 8))
 int ccrsa_crt_makekey(cczp_t zm, const cc_unit *e, cc_unit *d, cczp_t zp, cc_unit *dp, cc_unit *qinv, cczp_t zq, cc_unit *dq);
 
-CC_NONNULL2 CC_NONNULL4 CC_NONNULL5
+CC_NONNULL2 CC_NONNULL4
 int ccrsa_emsa_pkcs1v15_encode(size_t emlen, uint8_t *em,
 		               size_t dgstlen, const uint8_t *dgst,
 			       const uint8_t *oid);
 
-CC_NONNULL2 CC_NONNULL4 CC_NONNULL5
+CC_NONNULL2 CC_NONNULL4
 int ccrsa_emsa_pkcs1v15_verify(size_t emlen, uint8_t *em,
 		               size_t dgstlen, const uint8_t *dgst,
 			       const uint8_t *oid);
