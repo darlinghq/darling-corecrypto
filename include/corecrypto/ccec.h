@@ -140,14 +140,24 @@ size_t ccec_compact_import_pub_size(size_t in_len);
 
 // Functions
 CC_INLINE CC_CONST CC_NONNULL_TU((2))
-size_t ccec_x963_export_size(const int fullkey, ccec_full_ctx_t key){
-    return (((ccec_ctx_bitlen(key)+7)/8) * ((fullkey == 1) + 2)) + 1;
-}
+size_t ccec_x963_export_size_cp(bool is_full_key, ccec_const_cp_t cp) {
+	return (((ccec_cp_prime_bitlen(cp) + 7) /8 ) * ((is_full_key == true ? 1 : 0) + 2)) + 1;
+};
+
+CC_INLINE CC_CONST CC_NONNULL_TU((2))
+size_t ccec_x963_export_size(bool is_full_key, ccec_full_ctx_t key) {
+	return ccec_x963_export_size_cp(is_full_key, ccec_ctx_cp(key));
+};
 
 CC_INLINE CC_PURE CC_NONNULL_TU((1))
 size_t ccec_sign_max_size(ccec_const_cp_t cp) {
 	return 3 + 2 * (3 + ccec_cp_prime_size(cp));
 }
+
+CC_INLINE CC_NONNULL_TU((1, 2))
+void ccec_pub_ctx_clear_cp(ccec_const_cp_t cp, ccec_pub_ctx_t ctx) {
+	cc_clear(ccec_pub_ctx_size(ccec_ccn_size(cp)) - sizeof(struct ccec_ctx_header), CCEC_PUB_CTX_PUB(ctx)->point);
+};
 
 ccec_const_cp_t ccec_get_cp(size_t keysize);
 
