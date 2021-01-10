@@ -24,13 +24,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-struct ccrng_state * ccDRBGGetRngState(int *error) {
-	//printf("%s: just putting this here until we build CommonCrypto\n", __PRETTY_FUNCTION__);
-	struct ccrng_system_state *rng = malloc(sizeof(struct ccrng_system_state));
-	ccrng_system_init(rng);
-	return (struct ccrng_state *)rng;
-}
-
 void cc_clear(size_t len, void *dst)
 {
 	volatile unsigned char *ptr = (volatile unsigned char*) dst;
