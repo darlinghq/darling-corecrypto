@@ -106,7 +106,7 @@ struct ccmode_ctr {
     int (*init)(const struct ccmode_ctr *ctr, ccctr_ctx *ctx,
                 size_t key_len, const void *key, const void *iv);
     int (*ctr)(ccctr_ctx *ctx, size_t nbytes, const void *in, void *out);
-    int (*setctr)(ccctr_ctx* ctx, ccctr_ctx *, const void* iv);
+    int (*setctr)(const struct ccmode_ctr *ctr, ccctr_ctx *ctx, const void* iv);
     const void *custom;
 };
 

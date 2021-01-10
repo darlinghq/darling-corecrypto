@@ -57,12 +57,19 @@ set(corecrypto_sources
 		src/ccec_points.c
 		src/ccn_extra.c
 		src/cczp_extra.c
-		src/ccaes_extra.c
 		src/ccgcm.c
 		src/ccsrp.c
 		src/ccwrap_priv.c
 		src/cc_priv.c
 		src/ccec25519.c
+		src/cccbc.c
+		src/ccccm.c
+		src/cccfb.c
+		src/cccfb8.c
+		src/ccctr.c
+		src/ccofb.c
+		src/ccxts.c
+		src/ccckg.c
 )
 
 if (DARLING)

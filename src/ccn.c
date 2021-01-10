@@ -501,10 +501,10 @@ void ccn_zero_multi(cc_size n, cc_unit *r, ...) {
 
 void ccn_print(cc_size n, const cc_unit *s) {
   printf("size: %zu\n", n);
-  for (int i = 0; i < n; i++)
+  for (cc_size i = 0; i < n; i++)
   {
 #if CCN_UNIT_SIZE == 8
-    printf("%llx\n", s[i]);
+    printf("%llx\n", (unsigned long long)s[i]);
 #elif CCN_UNIT_SIZE == 4
     printf("%x\n", s[i]);
 #endif

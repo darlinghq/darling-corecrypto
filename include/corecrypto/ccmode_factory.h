@@ -253,7 +253,7 @@ int ccmode_ctr_init(const struct ccmode_ctr *ctr, ccctr_ctx *ctx,
                     size_t rawkey_len, const void *rawkey, const void *iv);
 int ccmode_ctr_crypt(ccctr_ctx *ctx, size_t nbytes,
                      const void *in, void *out);
-int ccmode_ctr_setctr(ccctr_ctx* ctx, ccctr_ctx *, const void* iv);
+int ccmode_ctr_setctr(const struct ccmode_ctr *ctr, ccctr_ctx *ctx, const void* iv);
 
 struct _ccmode_ctr_key {
     const struct ccmode_ecb *ecb;
