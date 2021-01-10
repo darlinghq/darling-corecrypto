@@ -182,7 +182,7 @@ typedef struct {
 
 #define ccn64_32(a1,a0) (((const cc_unit)a1) << 32 | ((const cc_unit)a0))
 #define ccn32_32(a0) a0
-#if __LITTLE_ENDIAN__
+#if CC_LITTLE_ENDIAN
 #define ccn32_32_parse(p,i) (((const uint32_t *)p)[i])
 #else
 #define ccn32_32_parse(p,i) (((const uint32_t *)p)[i^1])

@@ -352,7 +352,7 @@ CC_INLINE uint32_t CC_BSWAP(uint32_t x)
 (((uint64_t)(x) & 0x000000000000ff00ULL) << 40) | \
 (((uint64_t)(x) & 0x00000000000000ffULL) << 56)))
 
-#ifdef __LITTLE_ENDIAN__
+#if CC_LITTLE_ENDIAN
 #define CC_H2BE32(x) CC_BSWAP(x)
 #define CC_H2LE32(x) (x)
 #else

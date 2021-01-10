@@ -20,7 +20,11 @@
 #include <corecrypto/ccdigest.h>
 #include <corecrypto/ccdigest_priv.h>
 #include <string.h>
+#ifdef __APPLE__
 #include <libkern/OSByteOrder.h>
+#else
+#include <endian.h>
+#endif
 
 #include <corecrypto/ccmd2.h>
 #include <corecrypto/ccmd4.h>
@@ -28,34 +32,20 @@
 #include <corecrypto/ccsha1.h>
 #include <corecrypto/ccsha2.h>
 #include <corecrypto/ccripemd.h>
+#include <corecrypto/cc_priv.h>
 
-#ifdef __LITTLE_ENDIAN__
+#if CC_LITTLE_ENDIAN
 static uint64_t swap64le(uint64_t v) { return v; }
-#define swap64be _OSSwapInt64
-
-static void store32le(uint32_t v, void* dest)
-{
-	memcpy(dest, &v, sizeof(v));
-}
-static void store32be(uint32_t v, void* dest)
-{
-	store32le(OSSwapInt32(v), dest);
-}
-#elif defined(__BIG_ENDIAN__)
+static uint64_t swap64be(uint64_t v) { return CC_BSWAP64(v); }
+#elif CC_BIG_ENDIAN
 static uint64_t swap64be(uint64_t v) { return v; }
-#define swap64le _OSSwapInt64
-
-static void store32be(uint32_t v, void* dest)
-{
-	memcpy(dest, &v, sizeof(v));
-}
-static void store32le(uint32_t v, void* dest)
-{
-	store32be(OSSwapInt32(v), dest);
-}
+static uint64_t swap64le(uint64_t v) { return CC_BSWAP64(v); }
 #else
 #error Unknown endianess!
 #endif
+
+static void store32le(uint32_t v, void* dest) { CC_STORE32_LE(v, dest); }
+static void store32be(uint32_t v, void* dest) { CC_STORE32_BE(v, dest); }
 
 void ccdigest_final_64(const struct ccdigest_info *di, ccdigest_ctx_t ctx,
 		                 unsigned char *digest,

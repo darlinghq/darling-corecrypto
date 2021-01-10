@@ -423,5 +423,20 @@
  #define CC_MALLOC
 #endif /* !__GNUC__ */
 
+// detect endianness using information from https://sourceforge.net/p/predef/wiki/Endianness/
+#if defined(__has_include)
+  #if __has_include(<endian.h>)
+    #include <endian.h>
+  #endif
+#endif
+#if (defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN) || defined(__BIG_ENDIAN__) || defined(__ARMEB__) || defined(__THUMBEB__) || defined(__AARCH64EB__) || defined(_MIBSEB) || defined(__MIBSEB) || defined(__MIBSEB__)
+  #define CC_BIG_ENDIAN 1
+  #define CC_LITTLE_ENDIAN 0
+#elif (defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN) || defined(__LITTLE_ENDIAN__) || defined(__ARMEL__) || defined(__THUMBEL__) || defined(__AARCH64EL__) || defined(_MIPSEL) || defined(__MIPSEL) || defined(__MIPSEL__)
+  #define CC_BIG_ENDIAN 0
+  #define CC_LITTLE_ENDIAN 1
+#else
+  #error Unknown endianess!
+#endif
 
 #endif /* _CORECRYPTO_CC_CONFIG_H_ */
