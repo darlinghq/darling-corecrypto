@@ -6,6 +6,7 @@ set(TEST_SOURCES
 	cczp_tests.c
 	ccdigest_tests.c
 	ccaes_tests.c
+	ccdes_tests.c
 )
 
 add_custom_command(

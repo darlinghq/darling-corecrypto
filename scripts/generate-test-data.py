@@ -11,8 +11,13 @@ CC_SOURCE_ROOT = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 AES_BLOCK_BITS = algorithms.AES.block_size
 AES_BLOCK_BYTES = AES_BLOCK_BITS // 8
 AES_KEY_BITS = [128, 192, 256]
+
 GCM_IV_BITS = 96
 GCM_IV_BYTES = GCM_IV_BITS // 8
+
+DES3_BLOCK_BITS = algorithms.TripleDES.block_size
+DES3_BLOCK_BYTES = DES3_BLOCK_BITS // 8
+DES3_KEY_BITS = algorithms.TripleDES.key_sizes
 
 # how many blocks to generate for the plaintext
 PLAINTEXT_BLOCK_COUNT = 1
@@ -105,6 +110,48 @@ def generate_digest_data():
 
 	return result
 
+def generate_des3_data():
+	result = str()
+	plaintext = os.urandom(PLAINTEXT_BLOCK_COUNT * DES3_BLOCK_BYTES)
+
+	result += '//\n' + '// DES (64-bit keys) and DES3 (128-bit and 192-bit keys)\n' + '//\n'
+
+	result += to_c_array('ccdes_plaintext_block', plaintext)
+
+	for key_bits in DES3_KEY_BITS:
+		key = os.urandom(key_bits // 8)
+		alg = algorithms.TripleDES(key)
+
+		result += '\n'
+
+		result += '//\n' + '// DES-' + str(key_bits) + '\n' + '//\n'
+
+		result += to_c_array('ccdes_' + str(key_bits) + '_key', key)
+
+		result += '\n'
+
+		result += '//\n' + '// DES-' + str(key_bits) + '-ECB\n' + '//\n'
+
+		ecb = Cipher(alg, modes.ECB(), default_backend())
+		enc = ecb.encryptor()
+		result += to_c_array('ccdes_' + str(key_bits) + '_ecb_ciphertext', enc.update(plaintext) + enc.finalize())
+
+		result += '\n'
+
+		result += '//\n' + '// DES-' + str(key_bits) + '-CBC\n' + '//\n'
+
+		cbc_iv = os.urandom(DES3_BLOCK_BYTES)
+		result += to_c_array('ccdes_' + str(key_bits) + '_cbc_iv', cbc_iv)
+		cbc = Cipher(alg, modes.CBC(cbc_iv), default_backend())
+		enc = cbc.encryptor()
+		result += to_c_array('ccdes_' + str(key_bits) + '_cbc_ciphertext', enc.update(plaintext) + enc.finalize())
+
+		result += '\n'
+
+		# can't test DES with GCM because the cryptography module doesn't support that
+
+	return result
+
 output_string = str()
 
 output_string += '#ifndef CC_TESTS_TEST_DATA_H\n'
@@ -113,6 +160,7 @@ output_string += '#include <stdint.h>\n\n'
 
 output_string += generate_aes_data() + '\n'
 output_string += generate_digest_data() + '\n'
+output_string += generate_des3_data() + '\n'
 
 output_string += '#endif // CC_TESTS_TEST_DATA_H\n'
 
