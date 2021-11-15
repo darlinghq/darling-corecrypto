@@ -458,7 +458,9 @@ int ccn_read_uint(cc_size n, cc_unit *r, size_t data_size, const uint8_t *data) 
 
 size_t ccn_write_int_size(cc_size n, const cc_unit* s) {
 	const cc_size bits = ccn_bitlen(n, s);
-	return cc_sizeof_bits(bits);
+  // For signed integers, add a leading zero byte if the
+  // most significant bit is set. 
+	return cc_sizeof_bits(bits) + (bits % 8 == 0);
 };
 
 size_t ccn_write_uint_size(cc_size n, const cc_unit* s) {
@@ -486,7 +488,14 @@ void ccn_write_uint(cc_size n, const cc_unit *s, size_t out_size, void *out) {
 }
 
 void ccn_write_int(cc_size n, const cc_unit *s, size_t out_size, void *out) {
-  printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	uint8_t* data = out;
+
+	memset(data, 0, out_size);
+
+	size_t data_idx = out_size;
+	for (size_t ccn_idx = 0; ccn_idx < n; ++ccn_idx)
+		for (uint8_t octet = 0; octet < CCN_UNIT_SIZE && data_idx > 0; ++octet, --data_idx)
+			data[data_idx - 1] = (s[ccn_idx] >> (octet * 8)) & 0xff;
 }
 
 void ccn_set(cc_size n, cc_unit *r, const cc_unit *s) {
