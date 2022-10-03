@@ -34,6 +34,11 @@ typedef struct { \
 uint8_t b[_alignment_]; \
 } CC_ALIGNED(_alignment_)
 
+#define cc_aligned_struct_name(_struct_name_,_alignment_)  \
+typedef struct _struct_name_ { \
+uint8_t b[_alignment_]; \
+} CC_ALIGNED(_alignment_) _struct_name_
+
 /* number of array elements used in a cc_ctx_decl */
 #define cc_ctx_n(_type_, _size_) ((_size_ + sizeof(_type_) - 1) / sizeof(_type_))
 

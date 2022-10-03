@@ -1038,6 +1038,21 @@ int ccec_validate_pub(ccec_pub_ctx_t pub) {
 	return -1;
 };
 
+int ccec_blind(struct ccrng_state *rng_state, ccec_full_ctx_t cc_eckey_private, ccec_pub_ctx_t ccec_cryptor_eckey_public, ccec_pub_ctx_t ccec_blinded_eckey_public) {
+	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	return -1;
+}
+
+int ccec_unblind(struct ccrng_state *rng_state, ccec_full_ctx_t cc_eckey_private, ccec_pub_ctx_t ccec_cryptor_eckey_public, ccec_pub_ctx_t ccec_unblinded_eckey_public) {
+	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	return -1;
+}
+
+int ccec_generate_blinding_keys(ccec_const_cp_t cp, struct ccrng_state *rng_state, ccec_full_ctx_t cc_k_eckey_private, ccec_full_ctx_t cc_kinv_eckey_private) {
+	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	return -1;
+}
+
 struct ccec_rfc6637_wrap
 {
     int dummy;

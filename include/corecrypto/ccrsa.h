@@ -9,7 +9,7 @@
 
 // Structs / unions
 
-cc_aligned_struct(16) ccrsa_full_ctx;
+cc_aligned_struct_name(ccrsa_full_ctx,16);
 cc_aligned_struct(16) ccrsa_priv_ctx;
 cc_aligned_struct(16) ccrsa_pub_ctx;
 

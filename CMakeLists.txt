@@ -58,6 +58,7 @@ set(corecrypto_sources
 		src/ccn_extra.c
 		src/cczp_extra.c
 		src/ccgcm.c
+		src/cch2c.c
 		src/ccsrp.c
 		src/ccwrap_priv.c
 		src/cc_priv.c
@@ -66,6 +67,7 @@ set(corecrypto_sources
 		src/ccccm.c
 		src/cccfb.c
 		src/cccfb8.c
+		src/ccchacha20poly1305.c
 		src/ccctr.c
 		src/ccofb.c
 		src/ccxts.c

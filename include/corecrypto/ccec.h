@@ -358,4 +358,8 @@ int ccec_diversify_pub_twin(ccec_const_cp_t cp, ccec_pub_ctx_t pub, size_t entro
 
 int ccec_validate_pub(ccec_pub_ctx_t pub);
 
+int ccec_blind(struct ccrng_state *rng_state, ccec_full_ctx_t cc_eckey_private, ccec_pub_ctx_t ccec_cryptor_eckey_public, ccec_pub_ctx_t ccec_blinded_eckey_public);
+int ccec_unblind(struct ccrng_state *rng_state, ccec_full_ctx_t cc_eckey_private, ccec_pub_ctx_t ccec_cryptor_eckey_public, ccec_pub_ctx_t ccec_unblinded_eckey_public);
+int ccec_generate_blinding_keys(ccec_const_cp_t cp, struct ccrng_state *rng_state, ccec_full_ctx_t cc_k_eckey_private, ccec_full_ctx_t cc_kinv_eckey_private);
+
 #endif
