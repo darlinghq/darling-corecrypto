@@ -1013,7 +1013,7 @@ int ccec_compact_import_priv(ccec_const_cp_t cp, size_t in_len, const uint8_t *i
 }
  
 // Guessed
-int ccec_generate_key_deterministic(ccec_const_cp_t arg0, int arg1, unsigned char *arg2, struct ccrng_state *arg3, int arg4, int arg5) {
+int ccec_generate_key_deterministic(ccec_const_cp_t arg0, int arg1, unsigned char *arg2, struct ccrng_state *arg3, int arg4, struct ccec_full_ctx* arg5) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 	return -1;
 }

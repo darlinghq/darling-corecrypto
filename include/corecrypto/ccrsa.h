@@ -212,7 +212,7 @@ size_t ccrsa_export_pub_size(const ccrsa_pub_ctx_t key) {
 int ccrsa_make_priv(ccrsa_full_ctx_t key, size_t expLen, const void* exp, size_t pLen, const void* p, size_t qLen, const void* q);
 int ccrsa_make_pub(ccrsa_pub_ctx_t key, size_t expLen, const void* exp, size_t modLen, const void* mod);
 
-int ccrsa_sign_pss(ccrsa_full_ctx_t key, const struct ccdigest_info* di1, const struct ccdigest_info* di2, size_t saltLen, struct ccrng_state* rng, size_t hashLen, const void* hash, size_t signedDataLen, void* signedData);
+int ccrsa_sign_pss(ccrsa_full_ctx_t key, const struct ccdigest_info* di1, const struct ccdigest_info* di2, size_t saltLen, struct ccrng_state* rng, size_t hashLen, const void* hash, size_t* signedDataLen, void* signedData);
 int ccrsa_verify_pss(ccrsa_full_ctx_t key, const struct ccdigest_info* di1, const struct ccdigest_info* di2, size_t hashLen, const void* hash, size_t signedDataLen, const void* signedData, size_t saltLen, bool* valid);
 
 #endif

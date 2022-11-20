@@ -297,7 +297,7 @@ int ccrsa_make_pub(ccrsa_pub_ctx_t key, size_t expLen, const void* exp, size_t m
 	return -1;
 };
 
-int ccrsa_sign_pss(ccrsa_full_ctx_t key, const struct ccdigest_info* di1, const struct ccdigest_info* di2, size_t saltLen, struct ccrng_state* rng, size_t hashLen, const void* hash, size_t signedDataLen, void* signedData) {
+int ccrsa_sign_pss(ccrsa_full_ctx_t key, const struct ccdigest_info* di1, const struct ccdigest_info* di2, size_t saltLen, struct ccrng_state* rng, size_t hashLen, const void* hash, size_t* signedDataLen, void* signedData) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 	return -1;
 };
