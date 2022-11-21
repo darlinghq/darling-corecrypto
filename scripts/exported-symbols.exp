@@ -584,6 +584,9 @@ _cczp_power
 #_csss_shamir_share_bag_can_recover_secret
 #_fipspost_post
 #_fipspost_trace_vtable
+_cch2c_p256_sha256_sswu_ro_info
+_cch2c_p384_sha512_sswu_ro_info
+_cch2c_p521_sha512_sswu_ro_info
 
 # not in standard corecrypto, for some reason?
 _ccn_shift_left

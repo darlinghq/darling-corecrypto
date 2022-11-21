@@ -4,9 +4,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-extern size_t CCCHACHA20_KEY_NBYTES;
-extern size_t CCCHACHA20_NONCE_NBYTES;
-extern size_t CCPOLY1305_TAG_NBYTES;
+#define CCCHACHA20_KEY_NBYTES 0
+#define CCCHACHA20_NONCE_NBYTES 0
+#define CCPOLY1305_TAG_NBYTES 0
 
 void *ccchacha20poly1305_info();
 int ccchacha20(const void *key, const void *nonce, uint32_t counter, size_t dataInLength, const void *dataIn, void *dataOut);
