@@ -16,6 +16,10 @@
 #include <stdint.h>
 #include <corecrypto/cc_error.h>
 
+// Stub
+#define CC_MAX_ALIGNMENT 0
+#define cc_pad_align(size) size
+
 /* Manage asserts here because a few functions in header public files do use asserts */
 #define cc_assert(x) assert(x)
 #if CC_KERNEL

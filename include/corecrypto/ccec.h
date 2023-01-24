@@ -350,6 +350,7 @@ int ccec_compact_import_priv(ccec_const_cp_t cp, size_t in_len, const uint8_t *i
 int ccec_generate_key_deterministic(ccec_const_cp_t arg0, int arg1, unsigned char *arg2, struct ccrng_state *arg3, int arg4, struct ccec_full_ctx* arg5);
 
 #define CCEC_GENKEY_DETERMINISTIC_COMPACT 0
+#define CCEC_GENKEY_DETERMINISTIC_SECBKP 1
 
 size_t ccec_diversify_min_entropy_len(ccec_const_cp_t cp);
 
