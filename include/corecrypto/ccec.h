@@ -262,9 +262,14 @@ int ccec_verify(ccec_pub_ctx_t key, size_t digest_len, const uint8_t *digest,
 CC_NONNULL_TU((1)) CC_NONNULL2
 void ccec_export_pub(ccec_pub_ctx_t key, void *out);
 
+CC_INLINE CC_CONST
+size_t ccec_export_pub_size_cp(ccec_const_cp_t cp) {
+    return 1 + 2 * ccec_cp_prime_size(cp);
+}
+
 CC_INLINE CC_CONST CC_NONNULL_TU((1))
 size_t ccec_export_pub_size(ccec_pub_ctx_t key) {
-    return 1 + 2 * ccec_cp_prime_size(ccec_ctx_cp(key));
+    return ccec_export_pub_size_cp(ccec_ctx_cp(key));
 }
 
 CC_NONNULL_TU((1,4)) CC_NONNULL((3))
@@ -351,6 +356,7 @@ int ccec_generate_key_deterministic(ccec_const_cp_t arg0, int arg1, unsigned cha
 
 #define CCEC_GENKEY_DETERMINISTIC_COMPACT 0
 #define CCEC_GENKEY_DETERMINISTIC_SECBKP 1
+#define CCEC_GENKEY_DETERMINISTIC_LEGACY 2 /* arbitrary guess */
 
 size_t ccec_diversify_min_entropy_len(ccec_const_cp_t cp);
 
