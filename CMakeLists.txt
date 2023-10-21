@@ -2,8 +2,6 @@ project(darling-corecrypto)
 
 add_compile_options(
 	-Wno-return-type
-	-Werror
-	-Wno-error=cpp
 )
 
 add_definitions(
