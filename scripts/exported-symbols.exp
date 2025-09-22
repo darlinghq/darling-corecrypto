@@ -98,6 +98,7 @@ _cccmac_one_shot_generate
 #_cccmac_one_shot_verify
 _cccmac_update
 _cccurve25519
+_cccurve25519_make_key_pair
 _ccder_decode_bitstring
 _ccder_decode_constructed_tl
 #_ccder_decode_constructed_tl_strict
