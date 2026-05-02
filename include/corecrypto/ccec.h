@@ -117,7 +117,7 @@ size_t ccec_sign_max_size(ccec_const_cp_t cp) {
 
 CC_INLINE CC_NONNULL_TU((1, 2))
 void ccec_pub_ctx_clear_cp(ccec_const_cp_t cp, ccec_pub_ctx_t ctx) {
-	cc_clear(ccec_pub_ctx_size(ccec_ccn_size(cp)) - sizeof(struct ccec_ctx_header), CCEC_PUB_CTX_PUB(ctx)->point);
+	cc_clear(ccec_pub_ctx_size(ccec_ccn_size(cp)) - sizeof(struct ccec_ctx_header), ctx.pub->point);
 };
 
 ccec_const_cp_t ccec_get_cp(size_t keysize);
