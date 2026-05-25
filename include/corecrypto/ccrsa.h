@@ -66,7 +66,7 @@ typedef ccrsa_pub_ctx* ccrsa_pub_ctx_t;
 #define ccrsa_ctx_e(_ctx_)         (ccrsa_ctx_m(_ctx_) + 2 * ccrsa_ctx_n(_ctx_) + 1)
 #define ccrsa_ctx_d(_ctx_)         (ccrsa_ctx_m(((ccrsa_full_ctx_t)_ctx_)) + 3 * ccrsa_ctx_n(_ctx_) + 1)
 
-#define ccrsa_ctx_private_zq(PRIVK)   ((cczp_t)(CCZP_T_PRIME(CCRSA_PRIV_CTX_T_ZP((ccrsa_priv_ctx_t)(PRIVK)))->ccn + 2 * CCZP_T_ZP(ccrsa_ctx_private_zp(PRIVK))->n + 1))
+#define ccrsa_ctx_private_zq(PRIVK)   ((cczp_t)(CCZP_T_PRIME(CCRSA_PRIV_CTX_T_ZP(PRIVK))->ccn + 2 * CCZP_T_ZP(ccrsa_ctx_private_zp(PRIVK))->n + 1))
 #define ccrsa_pub_ctx_size(_size_)   (sizeof(struct cczp) + CCN_UNIT_SIZE + 3 * (_size_))
 cczp_const_t ccrsa_ctx_private_zp(const ccrsa_full_ctx_t full_ctx);
 #define ccrsa_ctx_private_dq(PRIVK)   (CCZP_T_PRIME(CCRSA_PRIV_CTX_T_ZP((ccrsa_priv_ctx_t)(PRIVK)))->ccn + 5 * CCZP_T_ZP(ccrsa_ctx_private_zp(PRIVK))->n + 2 + ccn_nof_size(sizeof(struct cczp)))
@@ -122,7 +122,7 @@ CC_NONNULL_TU((1)) CC_NONNULL((2)) CC_NONNULL((3))
 uint8_t *ccder_encode_rsa_priv(const ccrsa_full_ctx_t key, const uint8_t *der, uint8_t *der_end);
 
 CC_NONNULL_TU((1)) CC_NONNULL((2, 3))
-int ccrsa_priv_crypt(ccrsa_priv_ctx_t key, cc_unit *out, const cc_unit *in);
+int ccrsa_priv_crypt(ccrsa_full_ctx_t key, cc_unit *out, const cc_unit *in);
 
 CC_NONNULL((1)) CC_NONNULL((2))
 cc_size ccder_decode_rsa_priv_n(const uint8_t *der, const uint8_t *der_end);
@@ -213,6 +213,6 @@ int ccrsa_make_priv(ccrsa_full_ctx_t key, size_t expLen, const void* exp, size_t
 int ccrsa_make_pub(ccrsa_pub_ctx_t key, size_t expLen, const void* exp, size_t modLen, const void* mod);
 
 int ccrsa_sign_pss(ccrsa_full_ctx_t key, const struct ccdigest_info* di1, const struct ccdigest_info* di2, size_t saltLen, struct ccrng_state* rng, size_t hashLen, const void* hash, size_t* signedDataLen, void* signedData);
-int ccrsa_verify_pss(ccrsa_full_ctx_t key, const struct ccdigest_info* di1, const struct ccdigest_info* di2, size_t hashLen, const void* hash, size_t signedDataLen, const void* signedData, size_t saltLen, bool* valid);
+int ccrsa_verify_pss(ccrsa_pub_ctx_t key, const struct ccdigest_info* di1, const struct ccdigest_info* di2, size_t hashLen, const void* hash, size_t signedDataLen, const void* signedData, size_t saltLen, bool* valid);
 
 #endif
