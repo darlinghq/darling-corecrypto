@@ -306,3 +306,7 @@ int ccrsa_verify_pss(ccrsa_full_ctx_t key, const struct ccdigest_info* di1, cons
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 	return -1;
 };
+
+cczp_const_t ccrsa_ctx_private_zp(const ccrsa_full_ctx_t full_ctx) {
+	return (cczp_const_t)CCRSA_PRIV_CTX_T_ZP(full_ctx);
+}

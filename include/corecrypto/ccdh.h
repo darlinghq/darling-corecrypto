@@ -119,19 +119,15 @@ CC_NONNULL_TU((1)) CC_NONNULL3
 int ccdh_import_pub(ccdh_const_gp_t gp, size_t in_len, const uint8_t *in,
                     ccdh_pub_ctx_t key);
 
-CC_CONST CC_INLINE CC_NONNULL_TU((1))
-cc_size ccdh_gp_n(ccdh_const_gp_t gp) {
-    return cczp_n(CCDH_CONST_GP_T_ZP(gp));
-}
+CC_CONST CC_NONNULL_TU((1))
+cc_size ccdh_gp_n(ccdh_const_gp_t gp);
 
 CC_NONNULL_TU((1)) CC_NONNULL2
 int ccdh_generate_key(ccdh_const_gp_t gp, struct ccrng_state *rng,
                       ccdh_full_ctx_t key);
 
-CC_CONST CC_INLINE CC_NONNULL_TU((1))
-size_t ccdh_ccn_size(ccdh_const_gp_t gp) {
-    return ccn_sizeof_n(cczp_n(CCDH_CONST_GP_T_ZP(gp)));
-}
+CC_CONST CC_NONNULL_TU((1))
+size_t ccdh_ccn_size(ccdh_const_gp_t gp);
 
 CC_NONNULL_TU((1)) CC_NONNULL2
 void ccdh_export_pub(ccdh_pub_ctx_t key, void *out);
@@ -175,19 +171,11 @@ size_t ccdh_export_pub_size(ccdh_pub_ctx_t key) {
 
 #define ccdh_ctx_public(KEY) ((ccdh_pub_ctx_t)(KEY))
 
-CC_CONST CC_INLINE CC_NONNULL_TU((1))
-const cc_unit *ccdh_gp_g(ccdh_const_gp_t gp) {
-#if CORECRYPTO_USE_TRANSPARENT_UNION
-    return CCDH_GP_G(gp._ncgp);
-#else
-    return CCDH_GP_G((ccdh_gp_t)gp);
-#endif
-}
+CC_CONST CC_NONNULL_TU((1))
+const cc_unit *ccdh_gp_g(ccdh_const_gp_t gp);
 
-CC_CONST CC_INLINE CC_NONNULL_TU((1))
-const cc_unit *ccdh_gp_prime(ccdh_const_gp_t gp) {
-    return cczp_prime(CCDH_CONST_GP_T_ZP(gp));
-}
+CC_CONST CC_NONNULL_TU((1))
+const cc_unit *ccdh_gp_prime(ccdh_const_gp_t gp);
 
 CC_NONNULL((1))
 cc_size ccder_decode_dhparam_n(const uint8_t *der, const uint8_t *der_end);

@@ -68,7 +68,7 @@ typedef ccrsa_pub_ctx* ccrsa_pub_ctx_t;
 
 #define ccrsa_ctx_private_zq(PRIVK)   ((cczp_t)(CCZP_T_PRIME(CCRSA_PRIV_CTX_T_ZP((ccrsa_priv_ctx_t)(PRIVK)))->ccn + 2 * CCZP_T_ZP(ccrsa_ctx_private_zp(PRIVK))->n + 1))
 #define ccrsa_pub_ctx_size(_size_)   (sizeof(struct cczp) + CCN_UNIT_SIZE + 3 * (_size_))
-#define ccrsa_ctx_private_zp(PRIVK)   (CCRSA_PRIV_CTX_T_ZP((ccrsa_priv_ctx_t)(PRIVK)))
+cczp_const_t ccrsa_ctx_private_zp(const ccrsa_full_ctx_t full_ctx);
 #define ccrsa_ctx_private_dq(PRIVK)   (CCZP_T_PRIME(CCRSA_PRIV_CTX_T_ZP((ccrsa_priv_ctx_t)(PRIVK)))->ccn + 5 * CCZP_T_ZP(ccrsa_ctx_private_zp(PRIVK))->n + 2 + ccn_nof_size(sizeof(struct cczp)))
 #define ccrsa_ctx_private_qinv(PRIVK) (CCZP_T_PRIME(CCRSA_PRIV_CTX_T_ZP((ccrsa_priv_ctx_t)(PRIVK)))->ccn + 6 * CCZP_T_ZP(ccrsa_ctx_private_zp(PRIVK))->n + 2 + ccn_nof_size(sizeof(struct cczp)))
 

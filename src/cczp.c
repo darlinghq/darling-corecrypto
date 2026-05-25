@@ -223,3 +223,13 @@ void cczp_power(cczp_const_t zp, cc_unit* r, const cc_unit* m, const cc_unit* e)
 		cczp_mod_prime(zp)(zp, base, intermediate, &ws);
 	}
 }
+
+CC_CONST cc_size cczp_n(cczp_const_t zp)
+{
+	return CCZP_CONST_SHORT_T_ZP(zp)->n;
+}
+
+CC_CONST const cc_unit *cczp_prime(cczp_const_t zp)
+{
+	return CCZP_CONST_SHORT_T_U(zp) + ccn_nof_size(sizeof(struct cczp));
+}
