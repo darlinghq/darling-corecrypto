@@ -623,7 +623,7 @@ int ccec_import_pub(ccec_const_cp_t cp, size_t in_len, const uint8_t* in, ccec_p
 		return -1;
 	}
 
-	const cc_size n = cczp_n((cczp_const_short_t)cp.zp);
+	const cc_size n = cczp_n(cp.zp);
 	const cc_size size = ccn_sizeof_n(n);
 
 	if (in_len != (2 * size) + 1) {

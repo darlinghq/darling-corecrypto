@@ -70,7 +70,7 @@ int ccrsa_generate_key(unsigned long nbits, ccrsa_full_ctx_t rsa_ctx,
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
 
-int ccrsa_priv_crypt(ccrsa_priv_ctx_t key, cc_unit *out, const cc_unit *in)
+int ccrsa_priv_crypt(ccrsa_full_ctx_t key, cc_unit *out, const cc_unit *in)
 {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
@@ -101,7 +101,7 @@ int ccrsa_verify_pkcs1v15(ccrsa_pub_ctx_t key, const uint8_t* oid, size_t digest
 
 	cc_size mod_size = ccrsa_ctx_n(key);
 	cczp_t zp = ccrsa_ctx_zm(key);
-	const cc_unit* modulus = cczp_prime((cczp_const_short_t)zp);
+	const cc_unit* modulus = cczp_prime(zp);
 	const cc_unit* reciprocal = cczp_recip(zp);
 	cc_unit* exponent = ccrsa_ctx_e(key);
 
@@ -275,8 +275,8 @@ int ccrsa_get_fullkey_components(const ccrsa_full_ctx_t key, uint8_t *modulus, s
 	*pLength = *qLength = ccn_sizeof_n(priv.zp.zp->n);
 	memcpy(modulus, ccrsa_ctx_m(pub), *modulusLength);
 	memcpy(exponent, ccrsa_ctx_e(pub), *exponentLength);
-	memcpy(p, ccrsa_ctx_private_zp(priv).prime->ccn, *pLength);
-	memcpy(q, ccrsa_ctx_private_zq(priv).prime->ccn, *qLength);
+	memcpy(p, ccrsa_ctx_private_zp(key).prime->ccn, *pLength);
+	memcpy(q, ccrsa_ctx_private_zq(key).prime->ccn, *qLength);
 	return 0;
 }
 
@@ -302,7 +302,11 @@ int ccrsa_sign_pss(ccrsa_full_ctx_t key, const struct ccdigest_info* di1, const 
 	return -1;
 };
 
-int ccrsa_verify_pss(ccrsa_full_ctx_t key, const struct ccdigest_info* di1, const struct ccdigest_info* di2, size_t hashLen, const void* hash, size_t signedDataLen, const void* signedData, size_t saltLen, bool* valid) {
+int ccrsa_verify_pss(ccrsa_pub_ctx_t key, const struct ccdigest_info* di1, const struct ccdigest_info* di2, size_t hashLen, const void* hash, size_t signedDataLen, const void* signedData, size_t saltLen, bool* valid) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 	return -1;
 };
+
+cczp_const_t ccrsa_ctx_private_zp(const ccrsa_full_ctx_t full_ctx) {
+	return (cczp_const_t)CCRSA_PRIV_CTX_T_ZP(full_ctx);
+}

@@ -145,7 +145,7 @@ size_t ccec_x963_export_size_cp(bool is_full_key, ccec_const_cp_t cp) {
 };
 
 CC_INLINE CC_CONST CC_NONNULL_TU((2))
-size_t ccec_x963_export_size(bool is_full_key, ccec_full_ctx_t key) {
+size_t ccec_x963_export_size(bool is_full_key, ccec_pub_ctx_t key) {
 	return ccec_x963_export_size_cp(is_full_key, ccec_ctx_cp(key));
 };
 
@@ -229,7 +229,7 @@ void ccec_compact_export(const int fullkey, void *out, ccec_full_ctx_t key);
 void ccec_compact_export_pub(void* out, ccec_pub_ctx_t key);
 
 CC_INLINE CC_CONST CC_NONNULL_TU((2))
-size_t ccec_compact_export_size(const int fullkey, ccec_full_ctx_t key){
+size_t ccec_compact_export_size(const int fullkey, ccec_pub_ctx_t key){
     return (((ccec_ctx_bitlen(key)+7)/8) * ((fullkey == 1) + 1));
 }
 
@@ -293,7 +293,7 @@ int ccec_der_import_priv_keytype(size_t len, const uint8_t * data, ccoid_t *oid,
 const ccec_const_cp_t ccec_curve_for_length_lookup(size_t keylen, ...);
 
 CC_INLINE
-void ccec_ctx_init(ccec_const_cp_t cp, ccec_pub_ctx_t key) {
+void ccec_ctx_init(ccec_const_cp_t cp, ccec_full_ctx_t key) {
     CCEC_PUB_CTX_HDR(key)->cp = cp;
 }
 

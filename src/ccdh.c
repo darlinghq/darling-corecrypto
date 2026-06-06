@@ -36,3 +36,27 @@ int ccdh_compute_shared_secret(ccdh_full_ctx_t ctx, ccdh_pub_ctx_t pub, size_t* 
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 	return -1;
 };
+
+CC_CONST CC_NONNULL_TU((1))
+const cc_unit *ccdh_gp_prime(ccdh_const_gp_t gp) {
+    return cczp_prime(CCDH_CONST_GP_T_ZP(gp));
+}
+
+CC_CONST CC_NONNULL_TU((1))
+size_t ccdh_ccn_size(ccdh_const_gp_t gp) {
+    return ccn_sizeof_n(cczp_n(CCDH_CONST_GP_T_ZP(gp)));
+}
+
+CC_CONST CC_NONNULL_TU((1))
+const cc_unit *ccdh_gp_g(ccdh_const_gp_t gp) {
+#if CORECRYPTO_USE_TRANSPARENT_UNION
+    return CCDH_GP_G(gp._ncgp);
+#else
+    return CCDH_GP_G((ccdh_gp_t)gp);
+#endif
+}
+
+CC_CONST CC_NONNULL_TU((1))
+cc_size ccdh_gp_n(ccdh_const_gp_t gp) {
+    return cczp_n(CCDH_CONST_GP_T_ZP(gp));
+}
