@@ -112,15 +112,9 @@ void cczp_mod(cczp_const_t zp, cc_unit* result, const cc_unit* operand, cc_ws_t 
 	// `r = r_1 - r_2`
 	cc_unit* r_extra = __builtin_alloca(normal_size);
 	memset(r_extra, 0, normal_size);
-	bool underflow = ccn_sub(n + 1, r_extra, r_1, r_2);
-
-	// `if r < 0`
-	if (underflow) {
-		for (cc_size i = 0; i < n + 1; ++i)
-			r_extra[i] = ~r_extra[i];
-
-		ccn_add1(n + 1, r_extra, r_extra, 1);
-	}
+	// `if r < 0, r = r + b^(k + 1)`: the subtraction wraps modulo b^(k + 1),
+	// which is exactly that addition, so the borrow needs no handling
+	ccn_sub(n + 1, r_extra, r_1, r_2);
 
 	// `while r >= m`
 	while (ccn_cmp(n + 1, r_extra, m_copy) >= 0) {
