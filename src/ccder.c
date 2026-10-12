@@ -308,8 +308,15 @@ ccder_encode_body(size_t size, const uint8_t* body,
 	return body_start;
 }
 
+// Callers chain decodes and check for NULL once at the end, so every decoder
+// accepts a NULL `der` (a failed earlier step) and returns NULL for input that
+// is truncated or does not carry the expected tag.
 const uint8_t *ccder_decode_tag(ccder_tag *tagp, const uint8_t *der, const uint8_t *der_end) {
 	size_t tag_len = 1;
+
+	if (der == NULL || der >= der_end)
+		return NULL;
+
 	*tagp = ((ccder_tag)(der[0] >> 5)) << CCDER_TAG_MASK_SHIFT_BACK;
 
 	if ((der[0] & 0x1f) == 0x1f) {
@@ -317,11 +324,13 @@ const uint8_t *ccder_decode_tag(ccder_tag *tagp, const uint8_t *der, const uint8
 		// 0x80 == 0b10000000
 		size_t i = 0;
 		do {
+			if (der + i + 1 >= der_end)
+				return NULL;
 			// 0x7f == 0b01111111
 			*tagp |= (((ccder_tag)der[i + 1] & 0x7fU) << (i * 7));
 			++i;
 			++tag_len;
-		} while (der[i + 1] & 0x80);
+		} while (der[i] & 0x80);
 		*tagp <<= 5;
 		*tagp |= 0x1f;
 	} else {
@@ -333,26 +342,40 @@ const uint8_t *ccder_decode_tag(ccder_tag *tagp, const uint8_t *der, const uint8
 }
 
 const uint8_t* ccder_decode_len(size_t* lenp, const uint8_t* der, const uint8_t* der_end) {
-	size_t len_len = 1;
+	size_t len = 0;
+
+	if (der == NULL || der >= der_end)
+		return NULL;
 
 	if (der[0] & 0x80) {
 		// long form
-		len_len = der[0] & 0x7f;
+		size_t len_len = der[0] & 0x7f;
 		++der;
+		if (len_len == 0 || len_len > sizeof(size_t) || (size_t)(der_end - der) < len_len)
+			return NULL;
 		for (size_t i = len_len; i > 0; --i)
-			*lenp |= (size_t)der[len_len - i] << ((i - 1) * 8);
+			len |= (size_t)der[len_len - i] << ((i - 1) * 8);
+		der += len_len;
 	} else {
 		// short form
-		*lenp = der[0] & 0x7f;
+		len = der[0] & 0x7f;
+		++der;
 	}
 
-	return der + len_len;
+	if ((size_t)(der_end - der) < len)
+		return NULL;
+
+	*lenp = len;
+	return der;
 }
 
 const uint8_t *ccder_decode_tl(ccder_tag expected_tag, size_t *lenp,
                                const uint8_t *der, const uint8_t *der_end) {
 	ccder_tag tag_found = 0;
-	return ccder_decode_len(lenp, ccder_decode_tag(&tag_found, der, der_end), der_end);
+	der = ccder_decode_tag(&tag_found, der, der_end);
+	if (der == NULL || tag_found != expected_tag)
+		return NULL;
+	return ccder_decode_len(lenp, der, der_end);
 }
 
 const uint8_t *
@@ -360,6 +383,10 @@ ccder_decode_constructed_tl(ccder_tag expected_tag, const uint8_t **body_end,
                             const uint8_t *der, const uint8_t *der_end) {
 	size_t body_len = 0;
 	const uint8_t* body_start = ccder_decode_tl(expected_tag, &body_len, der, der_end);
+	if (body_start == NULL) {
+		*body_end = der;
+		return NULL;
+	}
 	*body_end = body_start + body_len;
 	return body_start;
 }
@@ -367,21 +394,16 @@ ccder_decode_constructed_tl(ccder_tag expected_tag, const uint8_t **body_end,
 const uint8_t *
 ccder_decode_sequence_tl(const uint8_t **body_end,
                          const uint8_t *der, const uint8_t *der_end) {
-	// NOTE(@facekapow):
-	// we don't just call `ccder_decode_constructed_tl` because in the future,
-	// that method will check that the decoded tag is a CONSTRUCTED tag
-
-	size_t body_len = 0;
-	const uint8_t* body_start = ccder_decode_tl(CCDER_SEQUENCE, &body_len, der, der_end);
-	*body_end = body_start + body_len;
-	return body_start;
+	return ccder_decode_constructed_tl(CCDER_CONSTRUCTED_SEQUENCE, body_end, der, der_end);
 }
 
 const uint8_t *ccder_decode_uint_n(cc_size *n, 
                                  const uint8_t *der, const uint8_t *der_end) {
 	size_t num_len = 0;
 	const uint8_t* num_start = ccder_decode_tl(CCDER_INTEGER, &num_len, der, der_end);
-	while (num_start[0] == 0) {
+	if (num_start == NULL)
+		return NULL;
+	while (num_len > 0 && num_start[0] == 0) {
 		--num_len;
 		++num_start;
 	}
@@ -393,7 +415,9 @@ const uint8_t *ccder_decode_uint(cc_size n, cc_unit *r,
                                  const uint8_t *der, const uint8_t *der_end) {
 	size_t num_len = 0;
 	const uint8_t* num_start = ccder_decode_tl(CCDER_INTEGER, &num_len, der, der_end);
-	while (num_start[0] == 0) {
+	if (num_start == NULL)
+		return NULL;
+	while (num_len > 0 && num_start[0] == 0) {
 		--num_len;
 		++num_start;
 	}
@@ -405,7 +429,9 @@ const uint8_t *ccder_decode_uint64(uint64_t* r,
                                    const uint8_t *der, const uint8_t *der_end) {
 	size_t num_len = 0;
 	const uint8_t* num_start = ccder_decode_tl(CCDER_INTEGER, &num_len, der, der_end);
-	while (num_start[0] == 0) {
+	if (num_start == NULL)
+		return NULL;
+	while (num_len > 0 && num_start[0] == 0) {
 		--num_len;
 		++num_start;
 	}
@@ -422,13 +448,15 @@ const uint8_t *ccder_decode_uint64(uint64_t* r,
 const uint8_t *ccder_decode_seqii(cc_size n, cc_unit *r, cc_unit *s,
                                   const uint8_t *der, const uint8_t *der_end) {
 	size_t seq_len = 0;
-	return ccder_decode_uint(n, s, ccder_decode_uint(n, r, ccder_decode_tl(CCDER_SEQUENCE, &seq_len, der, der_end), der_end), der_end);
+	return ccder_decode_uint(n, s, ccder_decode_uint(n, r, ccder_decode_tl(CCDER_CONSTRUCTED_SEQUENCE, &seq_len, der, der_end), der_end), der_end);
 }
 
 const uint8_t *ccder_decode_oid(ccoid_t *oidp,
                                 const uint8_t *der, const uint8_t *der_end) {
 	size_t oid_len = 0;
 	const uint8_t* oid_start = ccder_decode_tl(CCDER_OBJECT_IDENTIFIER, &oid_len, der, der_end);
+	if (oid_start == NULL)
+		return NULL;
 	size_t total_len = (size_t)(oid_start - der) + oid_len;
 
 	CCOID(*oidp) = der;
@@ -441,6 +469,8 @@ const uint8_t *ccder_decode_bitstring(const uint8_t **bit_string,
                                 const uint8_t *der, const uint8_t *der_end) {
 	size_t byte_len = 0;
 	const uint8_t* bit_start = ccder_decode_tl(CCDER_BIT_STRING, &byte_len, der, der_end);
+	if (bit_start == NULL)
+		return NULL;
 
 	// NOTE(@facekapow):
 	// i'm not sure if Apple's API meant to include the *entire* bitstring including the leading
