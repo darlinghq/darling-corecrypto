@@ -675,7 +675,24 @@ int ccec_verify(ccec_pub_ctx_t key, size_t digest_len, const uint8_t* digest, si
 	cc_unit e[n];
 	memset(e, 0, sizeof e);
 
-	ccn_read_uint(n, e, (log_2_n >= 8 * digest_len) ? (log_2_n + 7) / 8 : digest_len, digest);
+	{
+		// ANSI X9.62: e is the leftmost bitlen(order) bits of the digest
+		size_t use_len = digest_len;
+		if (8 * use_len > log_2_n)
+			use_len = (log_2_n + 7) / 8;
+
+		ccn_read_uint(n, e, use_len, digest);
+
+		if (8 * use_len > log_2_n) {
+			// excess_bits is below 8, so a single pass over the units suffices
+			const size_t excess_bits = 8 * use_len - log_2_n;
+			for (cc_size i = 0; i < n; ++i) {
+				e[i] >>= excess_bits;
+				if (i + 1 < n)
+					e[i] |= e[i + 1] << (CCN_UNIT_BITS - excess_bits);
+			}
+		}
+	}
 
 	cc_unit r[n];
 	cc_unit s[n];
