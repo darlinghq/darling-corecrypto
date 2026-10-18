@@ -702,8 +702,17 @@ int ccec_verify(ccec_pub_ctx_t key, size_t digest_len, const uint8_t* digest, si
 	const uint8_t* const der_end = sig + sig_len;
 	const uint8_t* seq_end = NULL;
 	const uint8_t* const seq_start = ccder_decode_sequence_tl(&seq_end, sig, der_end);
-	const uint8_t* const s_start = ccder_decode_uint(n, r, seq_start, der_end);
-	ccder_decode_uint(n, s, s_start, der_end);
+	if (seq_start == NULL) {
+		*valid = false;
+		return CCERR_OK;
+	}
+	// Read the two components inside the SEQUENCE body, and reject a signature whose
+	// DER does not decode rather than verifying with the zeroed r and s above.
+	const uint8_t* const s_start = ccder_decode_uint(n, r, seq_start, seq_end);
+	if (s_start == NULL || ccder_decode_uint(n, s, s_start, seq_end) == NULL) {
+		*valid = false;
+		return CCERR_OK;
+	}
 
 	cc_unit s_inv[n];
 	memset(s_inv, 0, sizeof s_inv);

@@ -11,13 +11,19 @@ int ccrsa_import_pub(ccrsa_pub_ctx_t key, size_t inlen, const uint8_t *der) {
 	const uint8_t* der_end = der + inlen;
 	const uint8_t* body_end = NULL;
 	const uint8_t* body = ccder_decode_sequence_tl(&body_end, der, der_end);
+	if (body == NULL)
+		return CCERR_PARAMETER;
 
 	size_t mod_length = 0;
 	const uint8_t* mod_body = ccder_decode_tl(CCDER_INTEGER, &mod_length, body, body_end);
+	if (mod_body == NULL || mod_length == 0)
+		return CCERR_PARAMETER;
 	const uint8_t* mod_body_end = mod_body + mod_length;
 
 	size_t exp_length = 0;
 	const uint8_t* exp_body = ccder_decode_tl(CCDER_INTEGER, &exp_length, mod_body_end, body_end);
+	if (exp_body == NULL || exp_length == 0)
+		return CCERR_PARAMETER;
 
 	cc_size n = ccn_nof_size(mod_length);
 
@@ -33,7 +39,7 @@ int ccrsa_import_pub(ccrsa_pub_ctx_t key, size_t inlen, const uint8_t *der) {
 	ccrsa_ctx_n(key) = n;
 	ccrsa_init_pub(key, mod, exp);
 
-	return 0;
+	return CCERR_OK;
 };
 
 cc_size ccder_decode_rsa_pub_n(const uint8_t *der, const uint8_t *der_end)
@@ -220,9 +226,13 @@ int ccrsa_export_pub(const ccrsa_pub_ctx_t key, size_t out_len, uint8_t *out)
 cc_size ccder_decode_rsa_pub_x509_n(const uint8_t *der, const uint8_t *der_end) {
 	const uint8_t* body_end = NULL;
 	const uint8_t* body = ccder_decode_sequence_tl(&body_end, der, der_end);
+	if (body == NULL)
+		return 0;
 
 	size_t mod_length = 0;
 	const uint8_t* mod_body = ccder_decode_tl(CCDER_INTEGER, &mod_length, body, body_end);
+	if (mod_body == NULL)
+		return 0;
 
 	return ccn_nof_size(mod_length);
 };

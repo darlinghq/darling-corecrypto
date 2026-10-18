@@ -326,6 +326,10 @@ const uint8_t *ccder_decode_tag(ccder_tag *tagp, const uint8_t *der, const uint8
 		do {
 			if (der + i + 1 >= der_end)
 				return NULL;
+			// A high tag number wider than ccder_tag cannot be represented, and
+			// shifting by the type width is undefined, so reject it here.
+			if (i * 7 >= sizeof(ccder_tag) * 8)
+				return NULL;
 			// 0x7f == 0b01111111
 			*tagp |= (((ccder_tag)der[i + 1] & 0x7fU) << (i * 7));
 			++i;
@@ -401,7 +405,7 @@ const uint8_t *ccder_decode_uint_n(cc_size *n,
                                  const uint8_t *der, const uint8_t *der_end) {
 	size_t num_len = 0;
 	const uint8_t* num_start = ccder_decode_tl(CCDER_INTEGER, &num_len, der, der_end);
-	if (num_start == NULL)
+	if (num_start == NULL || num_len == 0)
 		return NULL;
 	while (num_len > 0 && num_start[0] == 0) {
 		--num_len;
@@ -415,7 +419,7 @@ const uint8_t *ccder_decode_uint(cc_size n, cc_unit *r,
                                  const uint8_t *der, const uint8_t *der_end) {
 	size_t num_len = 0;
 	const uint8_t* num_start = ccder_decode_tl(CCDER_INTEGER, &num_len, der, der_end);
-	if (num_start == NULL)
+	if (num_start == NULL || num_len == 0)
 		return NULL;
 	while (num_len > 0 && num_start[0] == 0) {
 		--num_len;
@@ -429,7 +433,7 @@ const uint8_t *ccder_decode_uint64(uint64_t* r,
                                    const uint8_t *der, const uint8_t *der_end) {
 	size_t num_len = 0;
 	const uint8_t* num_start = ccder_decode_tl(CCDER_INTEGER, &num_len, der, der_end);
-	if (num_start == NULL)
+	if (num_start == NULL || num_len == 0)
 		return NULL;
 	while (num_len > 0 && num_start[0] == 0) {
 		--num_len;
@@ -448,7 +452,16 @@ const uint8_t *ccder_decode_uint64(uint64_t* r,
 const uint8_t *ccder_decode_seqii(cc_size n, cc_unit *r, cc_unit *s,
                                   const uint8_t *der, const uint8_t *der_end) {
 	size_t seq_len = 0;
-	return ccder_decode_uint(n, s, ccder_decode_uint(n, r, ccder_decode_tl(CCDER_CONSTRUCTED_SEQUENCE, &seq_len, der, der_end), der_end), der_end);
+	const uint8_t* seq_start = ccder_decode_tl(CCDER_CONSTRUCTED_SEQUENCE, &seq_len, der, der_end);
+	if (seq_start == NULL)
+		return NULL;
+	// Bound the two INTEGERs by the SEQUENCE body, not by der_end, so a signature
+	// cannot carry its components outside the structure that was just validated.
+	const uint8_t* seq_end = seq_start + seq_len;
+	const uint8_t* r_end = ccder_decode_uint(n, r, seq_start, seq_end);
+	if (r_end == NULL)
+		return NULL;
+	return ccder_decode_uint(n, s, r_end, seq_end);
 }
 
 const uint8_t *ccder_decode_oid(ccoid_t *oidp,

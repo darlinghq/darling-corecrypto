@@ -16,12 +16,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-enum decoder { SEQUENCE, UINT, OID };
+enum decoder { SEQUENCE, UINT, OID, SEQII };
 
 static const struct {
 	const char* what;
 	unsigned len;
-	unsigned char der[8];
+	unsigned char der[16];
 	enum decoder decoder;
 } malformed[] = {
 	{ "empty input", 0, {0}, SEQUENCE },
@@ -30,10 +30,18 @@ static const struct {
 	{ "long length past size_t", 6, {0x30, 0x84, 0xff, 0xff, 0xff, 0xff}, SEQUENCE },
 	{ "long form with no length bytes", 2, {0x30, 0x80}, SEQUENCE },
 	{ "high tag number truncated", 2, {0x1f, 0x81}, SEQUENCE },
+	// Ten continuation bytes, so the last shift would be by 70 on a 64-bit ccder_tag.
+	{ "high tag number wider than ccder_tag", 13,
+	  {0x1f, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01}, SEQUENCE },
 	{ "SET where SEQUENCE expected", 2, {0x31, 0x00}, SEQUENCE },
 	{ "INTEGER body truncated", 3, {0x02, 0x04, 0x00}, UINT },
+	{ "INTEGER with no content octets", 2, {0x02, 0x00}, UINT },
 	{ "OCTET STRING where INTEGER expected", 3, {0x04, 0x01, 0x05}, UINT },
 	{ "OID body truncated", 2, {0x06, 0x09}, OID },
+	// An empty SEQUENCE followed by two INTEGERs: the components live outside the
+	// structure, so the sequence decoder must not reach them.
+	{ "INTEGERs outside an empty SEQUENCE", 8,
+	  {0x30, 0x00, 0x02, 0x01, 0x05, 0x02, 0x01, 0x07}, SEQII },
 };
 
 static const uint8_t* decode(enum decoder decoder, const uint8_t* der, const uint8_t* der_end) {
@@ -49,6 +57,10 @@ static const uint8_t* decode(enum decoder decoder, const uint8_t* der, const uin
 		case OID: {
 			ccoid_t oid;
 			return ccder_decode_oid(&oid, der, der_end);
+		}
+		case SEQII: {
+			cc_unit r[1] = {0}, s[1] = {0};
+			return ccder_decode_seqii(1, r, s, der, der_end);
 		}
 	}
 	return NULL;
