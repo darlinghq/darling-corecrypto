@@ -664,8 +664,21 @@ void ccec_compact_export_pub(void* out, ccec_pub_ctx_t key) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 };
 
+// X9.63 parts are as wide as the prime in bytes; bytes * 8 would give 528 for
+// P-521, which no curve has. 0 when no supported curve fits.
+static size_t ccec_x963_keysize(size_t in_len, size_t parts) {
+	static const size_t sizes[] = {192, 224, 256, 384, 521};
+
+	if (in_len < 1 || (in_len - 1) % parts != 0)
+		return 0;
+	for (size_t i = 0; i < sizeof(sizes) / sizeof(sizes[0]); ++i)
+		if ((sizes[i] + 7) / 8 == (in_len - 1) / parts)
+			return sizes[i];
+	return 0;
+}
+
 size_t ccec_x963_import_pub_size(size_t in_len) {
-	return ccn_bitsof_size((in_len - 1) / 2);
+	return ccec_x963_keysize(in_len, 2);
 };
 
 int ccec_keysize_is_supported(size_t keysize) {
@@ -683,7 +696,7 @@ int ccec_keysize_is_supported(size_t keysize) {
 };
 
 size_t ccec_x963_import_priv_size(size_t in_len) {
-	return ccn_bitsof_size((in_len - 1) / 3);
+	return ccec_x963_keysize(in_len, 3);
 };
 
 int ccec_import_pub(ccec_const_cp_t cp, size_t in_len, const uint8_t* in, ccec_pub_ctx_t key) {
@@ -702,7 +715,8 @@ int ccec_import_pub(ccec_const_cp_t cp, size_t in_len, const uint8_t* in, ccec_p
 	}
 
 	const cc_size n = cczp_n(cp.zp);
-	const cc_size size = ccn_sizeof_n(n);
+	// X9.63 coordinates are as wide as the prime, not as the limbs holding it
+	const size_t size = ccec_cp_prime_size(cp);
 
 	if (in_len != (2 * size) + 1) {
 		#ifdef CORECRYPTO_DIAGNOSTIC_PRINTS
