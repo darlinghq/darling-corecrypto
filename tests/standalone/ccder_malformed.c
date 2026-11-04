@@ -16,12 +16,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-enum decoder { SEQUENCE, UINT, OID, SEQII };
+enum decoder { SEQUENCE, UINT, UINT64, OID, SEQII };
 
 static const struct {
 	const char* what;
 	unsigned len;
-	unsigned char der[16];
+	unsigned char der[40];
 	enum decoder decoder;
 } malformed[] = {
 	{ "empty input", 0, {0}, SEQUENCE },
@@ -33,10 +33,20 @@ static const struct {
 	// Ten continuation bytes, so the last shift would be by 70 on a 64-bit ccder_tag.
 	{ "high tag number wider than ccder_tag", 13,
 	  {0x1f, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x01}, SEQUENCE },
+	// Eleven continuation octets: the last shift would be by 70 on a 64-bit ccder_tag.
+	{ "high tag number with 11 continuation octets", 14,
+	  {0x1f, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x81, 0x01, 0x00}, SEQUENCE },
 	{ "SET where SEQUENCE expected", 2, {0x31, 0x00}, SEQUENCE },
 	{ "INTEGER body truncated", 3, {0x02, 0x04, 0x00}, UINT },
 	{ "INTEGER with no content octets", 2, {0x02, 0x00}, UINT },
 	{ "OCTET STRING where INTEGER expected", 3, {0x04, 0x01, 0x05}, UINT },
+	// 33 significant bytes do not fit in cc_unit r[4] (32 bytes).
+	{ "INTEGER wider than the destination", 35,
+	  {0x02, 0x21, 0x01}, UINT },
+	{ "9-byte INTEGER into uint64", 11,
+	  {0x02, 0x09, 0x01, 0, 0, 0, 0, 0, 0, 0, 0}, UINT64 },
+	{ "uint64 INTEGER with no content octets", 2, {0x02, 0x00}, UINT64 },
+	{ "uint64 INTEGER body truncated", 4, {0x02, 0x09, 0x01, 0x00}, UINT64 },
 	{ "OID body truncated", 2, {0x06, 0x09}, OID },
 	// An empty SEQUENCE followed by two INTEGERs: the components live outside the
 	// structure, so the sequence decoder must not reach them.
@@ -53,6 +63,10 @@ static const uint8_t* decode(enum decoder decoder, const uint8_t* der, const uin
 		case UINT: {
 			cc_unit r[4];
 			return ccder_decode_uint(4, r, der, der_end);
+		}
+		case UINT64: {
+			uint64_t r;
+			return ccder_decode_uint64(&r, der, der_end);
 		}
 		case OID: {
 			ccoid_t oid;
@@ -71,7 +85,7 @@ int main(void) {
 
 	for (size_t i = 0; i < sizeof(malformed) / sizeof(malformed[0]); i++) {
 		unsigned len = malformed[i].len;
-		uint8_t* der = malloc(len ? len : 1);
+		uint8_t* der = malloc(len); /* exact size: ASan sees any over-read, even of one byte */
 		memcpy(der, malformed[i].der, len);
 		if (decode(malformed[i].decoder, der, der + len) != NULL) {
 			printf("FAIL %s: decoder did not return NULL\n", malformed[i].what);
@@ -95,6 +109,41 @@ int main(void) {
 		failures++;
 	}
 	free(der);
+
+	/* Edge cases that must decode, in exact-size heap blocks (the all-zero INTEGERs once
+	 * read the byte after the end). */
+	static const struct {
+		const char* what;
+		unsigned len;
+		unsigned char der[16];
+		enum decoder decoder;
+		uint64_t want;
+	} wellformed[] = {
+		{ "INTEGER 0", 3, {0x02, 0x01, 0x00}, UINT, 0 },
+		{ "INTEGER 00 00", 4, {0x02, 0x02, 0x00, 0x00}, UINT, 0 },
+		{ "INTEGER 0 as uint64", 3, {0x02, 0x01, 0x00}, UINT64, 0 },
+		{ "INTEGER 00 00 as uint64", 4, {0x02, 0x02, 0x00, 0x00}, UINT64, 0 },
+		{ "8 significant bytes as uint64", 11, {0x02, 0x09, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, UINT64, ~(uint64_t)0 },
+	};
+	for (size_t i = 0; i < sizeof(wellformed) / sizeof(wellformed[0]); i++) {
+		unsigned len = wellformed[i].len;
+		uint8_t* d = malloc(len);
+		memcpy(d, wellformed[i].der, len);
+		uint64_t got = 0;
+		const uint8_t* end;
+		if (wellformed[i].decoder == UINT64) {
+			end = ccder_decode_uint64(&got, d, d + len);
+		} else {
+			cc_unit r[4] = {1, 1, 1, 1};
+			end = ccder_decode_uint(4, r, d, d + len);
+			got = r[0] | r[1] | r[2] | r[3];
+		}
+		if (end != d + len || got != wellformed[i].want) {
+			printf("FAIL %s: end %s, value %llu\n", wellformed[i].what, end == d + len ? "ok" : "wrong", (unsigned long long)got);
+			failures++;
+		}
+		free(d);
+	}
 
 	printf("%d failure(s)\n", failures);
 	return failures != 0;

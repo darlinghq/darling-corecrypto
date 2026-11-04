@@ -33,8 +33,8 @@ int ccrsa_import_pub(ccrsa_pub_ctx_t key, size_t inlen, const uint8_t *der) {
 	memset(mod, 0, sizeof mod);
 	memset(exp, 0, sizeof exp);
 
-	ccn_read_uint(n, mod, mod_length, mod_body);
-	ccn_read_uint(n, exp, exp_length, exp_body);
+	if (ccn_read_uint(n, mod, mod_length, mod_body) != 0 || ccn_read_uint(n, exp, exp_length, exp_body) != 0)
+		return CCERR_PARAMETER;
 
 	ccrsa_ctx_n(key) = n;
 	ccrsa_init_pub(key, mod, exp);

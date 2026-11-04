@@ -425,7 +425,9 @@ const uint8_t *ccder_decode_uint(cc_size n, cc_unit *r,
 		--num_len;
 		++num_start;
 	}
-	ccn_read_uint(n, r, num_len, num_start);
+	// A value wider than r cannot be represented; do not hand back a silent zero.
+	if (ccn_read_uint(n, r, num_len, num_start) != 0)
+		return NULL;
 	return num_start + num_len;
 }
 
@@ -439,6 +441,10 @@ const uint8_t *ccder_decode_uint64(uint64_t* r,
 		--num_len;
 		++num_start;
 	}
+
+	// More than 8 significant bytes do not fit, and shifting a uint64_t by 64 is undefined.
+	if (num_len > sizeof(uint64_t))
+		return NULL;
 
 	*r = 0;
 
