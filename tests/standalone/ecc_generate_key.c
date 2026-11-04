@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 static int failures;
 
@@ -150,9 +151,59 @@ static void check_curve(const char* name, ccec_const_cp_t cp) {
 		fail(name, "ECDH shared secrets differ");
 }
 
+/* A generator that fails (after writing 0x01 bytes), or returns zero bytes for the first `zeros` calls and 0x01 bytes afterwards. */
+struct scripted_rng {
+	struct ccrng_state rng;
+	int zeros;
+	int fail;
+};
+
+static int scripted_generate(struct ccrng_state* rng, size_t len, void* out) {
+	struct scripted_rng* s = (struct scripted_rng*)rng;
+	/* a failing generator still leaves usable-looking bytes behind, so ignoring its error would yield a key */
+	memset(out, s->zeros-- > 0 ? 0 : 0x01, len);
+	return s->fail ? -1 : 0;
+}
+
+static void check_rng_paths(const char* name, ccec_const_cp_t cp) {
+	ccec_full_ctx_decl_cp(cp, key);
+	struct scripted_rng s = {.rng = {.generate = scripted_generate}};
+	const cc_size n = ccec_cp_n(cp);
+
+	s.fail = 1;
+	if (ccec_generate_key(cp, &s.rng, key) == 0)
+		fail(name, "an RNG failure was not reported");
+
+	s.fail = 0;
+	s.zeros = 1000;
+	if (ccec_generate_key(cp, &s.rng, key) == 0)
+		fail(name, "an all-zero RNG produced a key");
+
+	s.zeros = 3; /* three zero scalars are redrawn, the fourth draw (all 0x01 bytes) is accepted */
+	if (ccec_generate_key(cp, &s.rng, key) != 0)
+		fail(name, "a zero scalar was not redrawn");
+	cc_unit any = 0;
+	for (cc_size i = 0; i < n; i++)
+		any |= ccec_ctx_k(key)[i];
+	if (any == 0)
+		fail(name, "the key has a zero private scalar");
+}
+
+static void check_unsupported(const char* name, ccec_const_cp_t cp) {
+	int err = 0;
+	ccec_full_ctx_decl_cp(cp, key);
+	if (ccec_generate_key(cp, ccrng(&err), key) == 0)
+		fail(name, "key generation on an unsupported curve returned success");
+}
+
 int main(void) {
+	alarm(120);
 	check_curve("P-256", ccec_cp_256());
 	check_curve("P-384", ccec_cp_384());
+	check_rng_paths("P-256", ccec_cp_256());
+	check_rng_paths("P-384", ccec_cp_384());
+	check_unsupported("P-224", ccec_cp_224());
+	check_unsupported("P-521", ccec_cp_521());
 	printf("%d failure(s)\n", failures);
 	return failures != 0;
 }

@@ -960,6 +960,12 @@ int ccec_compute_key(ccec_full_ctx_t private_key, ccec_pub_ctx_t public_key,
 }
 
 int ccec_generate_key(ccec_const_cp_t cp, struct ccrng_state* rng, ccec_full_ctx_t key) {
+	// The P-224 and P-521 point arithmetic is known to be wrong: generated public keys are not on
+	// the curve and valid signatures do not verify. Refuse instead of returning an invalid key.
+	const size_t prime_bits = ccec_cp_prime_bitlen(cp);
+	if (prime_bits == 224 || prime_bits == 521)
+		return -1;
+
 	ccec_ctx_cp(key) = cp;
 
 	const cc_size n = ccec_cp_n(cp);
@@ -1001,7 +1007,8 @@ int ccec_generate_key(ccec_const_cp_t cp, struct ccrng_state* rng, ccec_full_ctx
 		for (unsigned attempt = 0; attempt < 16 && !have_k; ++attempt) {
 			memset(tmp_k, 0, sizeof tmp_k);
 
-			if (ccn_random_bits(ccec_cp_prime_bitlen(cp), tmp_k, rng) != 0)
+			// 64 bits more than the order, so the reduction below is uniform up to 2^-64 (FIPS 186-4 B.4.1)
+			if (ccn_random_bits(ccn_bitlen(n, ccec_cp_o(cp)) + 64, tmp_k, rng) != 0)
 				return -1;
 
 			cczp_mod(tmp_zp, k, tmp_k, NULL);
