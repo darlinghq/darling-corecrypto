@@ -206,6 +206,17 @@ static const struct {
 			CC_UNIT_FORMAT_4(FF, FF, FF, FF),
 		// }
 		// reciprocal of modulus p {
+			#if CCN_UNIT_SIZE == 8
+			// floor(b^(2k) / m) with b = 2^CCN_UNIT_BITS and k = units in the modulus, which
+			// is what cczp_mod's Barrett step needs (HAC 14.42); n + 1 units.
+			// k = 4, b = 2^64, full hex = 100000000000000000000000000000000ffffffffffffffffffffffff00000000ffffffff
+			0x00000000ffffffff,
+			0xffffffffffffffff,
+			0x00000000ffffffff,
+			0x0000000000000000,
+			0x0000000100000000,
+			#else
+			// 2^(2 * 224) / m, exact for unit sizes that divide 224 bits
 			// full hex = 0100000000000000000000000000000000ffffffffffffffffffffffff
 			CC_UNIT_FORMAT_8(ff, ff, ff, ff, ff, ff, ff, ff),
 			CC_UNIT_FORMAT_8(00, 00, 00, 00, ff, ff, ff, ff),
@@ -214,6 +225,7 @@ static const struct {
 			// necessary because the reciprocal *must* be `n + 1` units in length
 			#if CCN_UNIT_SIZE >= 5
 				CC_UNIT_FORMAT_1(00),
+			#endif
 			#endif
 		// }
 		// coefficient a {
@@ -252,6 +264,17 @@ static const struct {
 			CC_UNIT_FORMAT_4(ff, ff, ff, ff),
 		// }
 		// reciprocal of order n {
+			#if CCN_UNIT_SIZE == 8
+			// floor(b^(2k) / m) with b = 2^CCN_UNIT_BITS and k = units in the modulus, which
+			// is what cczp_mod's Barrett step needs (HAC 14.42); n + 1 units.
+			// k = 4, b = 2^64, full hex = 10000000000000000000000000000e95d1f470fc1ec22d6baa3a3d5c3d4baa4cf1822bc47
+			0xd4baa4cf1822bc47,
+			0xec22d6baa3a3d5c3,
+			0x0000e95d1f470fc1,
+			0x0000000000000000,
+			0x0000000100000000,
+			#else
+			// 2^(2 * 224) / m, exact for unit sizes that divide 224 bits
 			// full hex = 10000000000000000000000000000e95d1f470fc1ec22d6baa3a3d5c3
 			CC_UNIT_FORMAT_8(ec, 22, d6, ba, a3, a3, d5, c3),
 			CC_UNIT_FORMAT_8(00, 00, e9, 5d, 1f, 47, 0f, c1),
@@ -260,6 +283,7 @@ static const struct {
 			// necessary because the reciprocal *must* be `n + 1` units in length
 			#if CCN_UNIT_SIZE >= 5
 				CC_UNIT_FORMAT_1(00),
+			#endif
 			#endif
 		// }
 		// cofactor h {
@@ -458,18 +482,45 @@ static const struct {
 			CC_UNIT_FORMAT_2(01, ff),
 		// }
 		// reciprocal of modulus p {
-			// full hex = 20000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 01),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_2(02, 00),
-			// necessary because the reciprocal *must* be `n + 1` units in length
-			CC_UNIT_FORMAT_1(00),
+			#if CCN_UNIT_SIZE == 8
+			// floor(b^(2k) / m) with b = 2^CCN_UNIT_BITS and k = units in the modulus, which
+			// is what cczp_mod's Barrett step needs (HAC 14.42); n + 1 units.
+			// k = 9, b = 2^64, full hex = 80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000
+			0x0000000000000000,
+			0x0000400000000000,
+			0x0000000000000000,
+			0x0000000000000000,
+			0x0000000000000000,
+			0x0000000000000000,
+			0x0000000000000000,
+			0x0000000000000000,
+			0x0000000000000000,
+			0x0080000000000000,
+			#elif CCN_UNIT_SIZE == 4
+			// floor(b^(2k) / m) with b = 2^CCN_UNIT_BITS and k = units in the modulus, which
+			// is what cczp_mod's Barrett step needs (HAC 14.42); n + 1 units.
+			// k = 17, b = 2^32, full hex = 8000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000
+			0x00000000,
+			0x00004000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00800000,
+			#else
+			#error "no Barrett reciprocal for this unit size"
+			#endif
 		// }
 		// coefficient a {
 			// full hex = 01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc
@@ -532,18 +583,45 @@ static const struct {
 			CC_UNIT_FORMAT_2(01, ff),
 		// }
 		// reciprocal of order n {
-			// full hex = 2000000000000000000000000000000000000000000000000000000000000000005ae79787c40d069948033feb708f65a2fc44a36477663b851449048e16ec79bf7
-			CC_UNIT_FORMAT_8(44, 90, 48, e1, 6e, c7, 9b, f7),
-			CC_UNIT_FORMAT_8(c4, 4a, 36, 47, 76, 63, b8, 51),
-			CC_UNIT_FORMAT_8(80, 33, fe, b7, 08, f6, 5a, 2f),
-			CC_UNIT_FORMAT_8(ae, 79, 78, 7c, 40, d0, 69, 94),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 05),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_2(02, 00),
-			// necessary because the reciprocal *must* be `n + 1` units in length
-			CC_UNIT_FORMAT_1(00),
+			#if CCN_UNIT_SIZE == 8
+			// floor(b^(2k) / m) with b = 2^CCN_UNIT_BITS and k = units in the modulus, which
+			// is what cczp_mod's Barrett step needs (HAC 14.42); n + 1 units.
+			// k = 9, b = 2^64, full hex = 8000000000000000000000000000000000000000000000000000000000000000016b9e5e1f10341a65200cffadc23d968bf1128d91dd98ee14512412385bb1e6fdc408f501c8d1cd2dad1d7f46221c
+			0xcd2dad1d7f46221c,
+			0xe6fdc408f501c8d1,
+			0xee14512412385bb1,
+			0x968bf1128d91dd98,
+			0x1a65200cffadc23d,
+			0x00016b9e5e1f1034,
+			0x0000000000000000,
+			0x0000000000000000,
+			0x0000000000000000,
+			0x0080000000000000,
+			#elif CCN_UNIT_SIZE == 4
+			// floor(b^(2k) / m) with b = 2^CCN_UNIT_BITS and k = units in the modulus, which
+			// is what cczp_mod's Barrett step needs (HAC 14.42); n + 1 units.
+			// k = 17, b = 2^32, full hex = 8000000000000000000000000000000000000000000000000000000000000000016b9e5e1f10341a65200cffadc23d968bf1128d91dd98ee14512412385bb1e6fdc408f501c8d1
+			0xf501c8d1,
+			0xe6fdc408,
+			0x12385bb1,
+			0xee145124,
+			0x8d91dd98,
+			0x968bf112,
+			0xffadc23d,
+			0x1a65200c,
+			0x5e1f1034,
+			0x00016b9e,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00800000,
+			#else
+			#error "no Barrett reciprocal for this unit size"
+			#endif
 		// }
 		// cofactor h {
 			// full hex = 01
