@@ -39,6 +39,52 @@ static const struct {
 	  {0x30, 0x0e, 0x02, 0x01, 0x05, 0x02, 0x09, 0x01, 0, 0, 0, 0, 0, 0, 0, 0}, 0 },
 };
 
+/*
+ * The caller allocates the context for `cap` units and stores that in ccrsa_ctx_n(key).
+ * The import must fail, and must not write outside the block, when the modulus needs more
+ * units; and must not count the leading zero octet of a DER INTEGER against the capacity.
+ * The context is an exact-size heap block so AddressSanitizer sees any write past its end.
+ */
+static int import_with_capacity(const char* what, unsigned cap, unsigned mod_len, int pad, int want_ok) {
+	uint8_t der[2 + 2 + 1 + 80 + 5];
+	unsigned n = 0;
+	unsigned body = (2 + (mod_len + pad)) + 5;
+	der[n++] = 0x30;
+	der[n++] = (uint8_t)body;
+	der[n++] = 0x02;
+	der[n++] = (uint8_t)(mod_len + pad);
+	if (pad)
+		der[n++] = 0;
+	der[n++] = 0xc1; /* top bit set, odd last octet */
+	memset(der + n, 0x5a, mod_len - 1);
+	der[n + mod_len - 2] = 0xc3;
+	n += mod_len - 1;
+	static const uint8_t e[] = {0x02, 0x03, 0x01, 0x00, 0x01};
+	memcpy(der + n, e, sizeof e);
+	n += sizeof e;
+
+	ccrsa_pub_ctx* key = (ccrsa_pub_ctx*)calloc(1, ccrsa_pub_ctx_size(ccn_sizeof_n(cap)));
+	ccrsa_ctx_n(key) = cap;
+	int rc = ccrsa_import_pub(key, n, der);
+	free(key);
+	if ((rc == 0) != want_ok) {
+		printf("FAIL %s: rc=%d (want %s)\n", what, rc, want_ok ? "0" : "an error");
+		return 1;
+	}
+	return 0;
+}
+
+static int check_capacity(void) {
+	int f = 0;
+	f += import_with_capacity("33-byte modulus, capacity 2 units", 2, 33, 0, 0);
+	f += import_with_capacity("17-byte modulus, capacity 2 units", 2, 17, 0, 0);
+	f += import_with_capacity("16-byte modulus with 00 pad, capacity 2 units", 2, 16, 1, 1);
+	f += import_with_capacity("16-byte modulus, capacity 2 units", 2, 16, 0, 1);
+	f += import_with_capacity("16-byte modulus, capacity 1 unit", 1, 16, 0, 0);
+	f += import_with_capacity("64-byte modulus, capacity 8 units", 8, 64, 1, 1);
+	return f;
+}
+
 int main(void) {
 	int failures = 0;
 	for (size_t i = 0; i < sizeof(inputs) / sizeof(inputs[0]); i++) {
@@ -46,6 +92,7 @@ int main(void) {
 		uint8_t* der = malloc(len);
 		memcpy(der, inputs[i].der, len);
 		ccrsa_full_ctx_decl(64, key);
+		ccrsa_ctx_n(ccrsa_ctx_public(key)) = ccn_nof_size(64);
 		int rc = ccrsa_import_pub(ccrsa_ctx_public(key), len, der);
 		free(der);
 		if ((rc == 0) != inputs[i].want_ok) {
@@ -53,6 +100,7 @@ int main(void) {
 			failures++;
 		}
 	}
+	failures += check_capacity();
 	printf("%d failure(s)\n", failures);
 	return failures != 0;
 }

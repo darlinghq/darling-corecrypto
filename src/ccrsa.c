@@ -25,7 +25,25 @@ int ccrsa_import_pub(ccrsa_pub_ctx_t key, size_t inlen, const uint8_t *der) {
 	if (exp_body == NULL || exp_length == 0)
 		return CCERR_PARAMETER;
 
+	// A DER INTEGER carries a leading zero octet when the top bit is set; it does not count
+	// against the capacity the caller allocated.
+	while (mod_length > 0 && *mod_body == 0) {
+		mod_body++;
+		mod_length--;
+	}
+	if (mod_length == 0)
+		return CCERR_PARAMETER;
+	while (exp_length > 0 && *exp_body == 0) {
+		exp_body++;
+		exp_length--;
+	}
+
 	cc_size n = ccn_nof_size(mod_length);
+
+	// The caller sizes the context and stores its capacity, in units, in ccrsa_ctx_n(key).
+	// Writing more than that would run past the allocation.
+	if (n > ccrsa_ctx_n(key))
+		return CCERR_PARAMETER;
 
 	cc_unit mod[n];
 	cc_unit exp[n];
