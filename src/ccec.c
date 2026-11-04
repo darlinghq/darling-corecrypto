@@ -736,6 +736,14 @@ int ccec_verify_composite(ccec_pub_ctx_t key, size_t digest_len, const uint8_t *
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
 
+// True iff 0 < x < order. (ccn_is_zero is not usable here: ccn_n never returns 0.)
+static bool ccec_verify_component_in_range(cc_size n, const cc_unit* x, const cc_unit* order) {
+	cc_unit any = 0;
+	for (cc_size i = 0; i < n; ++i)
+		any |= x[i];
+	return any != 0 && ccn_cmp(n, x, order) < 0;
+}
+
 int ccec_verify(ccec_pub_ctx_t key, size_t digest_len, const uint8_t* digest, size_t sig_len, const uint8_t* sig, bool* valid) {
 	const cc_size n = ccec_ctx_n(key);
 	const ccec_const_cp_t curve = ccec_ctx_cp(key);
@@ -787,7 +795,17 @@ int ccec_verify(ccec_pub_ctx_t key, size_t digest_len, const uint8_t* digest, si
 	// Read the two components inside the SEQUENCE body, and reject a signature whose
 	// DER does not decode rather than verifying with the zeroed r and s above.
 	const uint8_t* const s_start = ccder_decode_uint(n, r, seq_start, seq_end);
-	if (s_start == NULL || ccder_decode_uint(n, s, s_start, seq_end) == NULL) {
+	const uint8_t* const s_end = (s_start == NULL) ? NULL : ccder_decode_uint(n, s, s_start, seq_end);
+	// The SEQUENCE must hold exactly the two INTEGERs and end exactly at the end of
+	// the signature; anything else is a malformed (or malleated) signature.
+	if (s_end == NULL || s_end != seq_end || seq_end != der_end) {
+		*valid = false;
+		return CCERR_OK;
+	}
+
+	// FIPS 186-4 6.4 / X9.62 7.4.1: both components must lie in [1, n-1]. r and s
+	// are public here, so these branches do not depend on secrets.
+	if (!ccec_verify_component_in_range(n, r, order) || !ccec_verify_component_in_range(n, s, order)) {
 		*valid = false;
 		return CCERR_OK;
 	}
@@ -795,7 +813,10 @@ int ccec_verify(ccec_pub_ctx_t key, size_t digest_len, const uint8_t* digest, si
 	cc_unit s_inv[n];
 	memset(s_inv, 0, sizeof s_inv);
 
-	ccn_modular_multiplicative_inverse(n, s_inv, s, order);
+	if (ccn_modular_multiplicative_inverse(n, s_inv, s, order) != 0) {
+		*valid = false;
+		return CCERR_OK;
+	}
 
 	// double-sized so that we can use `cczp_mod` on it later
 	cc_unit rx[2 * n];
