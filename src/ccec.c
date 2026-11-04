@@ -960,13 +960,16 @@ int ccec_compute_key(ccec_full_ctx_t private_key, ccec_pub_ctx_t public_key,
 }
 
 int ccec_generate_key(ccec_const_cp_t cp, struct ccrng_state* rng, ccec_full_ctx_t key) {
-	// The P-224 and P-521 point arithmetic is known to be wrong: generated public keys are not on
-	// the curve and valid signatures do not verify. Refuse instead of returning an invalid key.
-	const size_t prime_bits = ccec_cp_prime_bitlen(cp);
-	if (prime_bits == 224 || prime_bits == 521)
-		return -1;
-
+	// The curve is recorded first so the context stays consistent when generation is refused.
 	ccec_ctx_cp(key) = cp;
+
+	// P-521 point arithmetic is wrong with every unit size, and P-224 arithmetic is wrong with 64-bit
+	// units (the 32-bit constants were already right): generated public keys are not on the curve and
+	// valid signatures do not verify. Refuse instead of returning an invalid key, and remove the check
+	// once the curve code passes known-answer tests.
+	const size_t prime_bits = ccec_cp_prime_bitlen(cp);
+	if (prime_bits == 521 || (prime_bits == 224 && CCN_UNIT_SIZE == 8))
+		return -1;
 
 	const cc_size n = ccec_cp_n(cp);
 	const cc_size size = ccn_sizeof_n(n);

@@ -194,6 +194,23 @@ static void check_unsupported(const char* name, ccec_const_cp_t cp) {
 	ccec_full_ctx_decl_cp(cp, key);
 	if (ccec_generate_key(cp, ccrng(&err), key) == 0)
 		fail(name, "key generation on an unsupported curve returned success");
+	if (ccec_cp_prime_bitlen(ccec_ctx_cp(key)) != ccec_cp_prime_bitlen(cp))
+		fail(name, "the refused context does not record its curve");
+}
+
+static void check_supported(const char* name, ccec_const_cp_t cp) {
+	int err = 0;
+	ccec_full_ctx_decl_cp(cp, key);
+	const cc_size n = ccec_cp_n(cp);
+	if (ccec_generate_key(cp, ccrng(&err), key) != 0) {
+		fail(name, "key generation was refused on a supported curve");
+		return;
+	}
+	cc_unit any = 0;
+	for (cc_size i = 0; i < n; i++)
+		any |= ccec_ctx_k(key)[i];
+	if (any == 0 || ccn_cmp(n, ccec_ctx_k(key), ccec_cp_o(cp)) >= 0)
+		fail(name, "private scalar outside [1, order - 1]");
 }
 
 int main(void) {
@@ -202,8 +219,12 @@ int main(void) {
 	check_curve("P-384", ccec_cp_384());
 	check_rng_paths("P-256", ccec_cp_256());
 	check_rng_paths("P-384", ccec_cp_384());
-	check_unsupported("P-224", ccec_cp_224());
 	check_unsupported("P-521", ccec_cp_521());
+#if CCN_UNIT_SIZE == 8
+	check_unsupported("P-224", ccec_cp_224());
+#else
+	check_supported("P-224", ccec_cp_224()); /* the 32-bit P-224 constants are right, so the curve works */
+#endif
 	printf("%d failure(s)\n", failures);
 	return failures != 0;
 }
