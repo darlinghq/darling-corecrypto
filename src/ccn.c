@@ -558,8 +558,9 @@ void ccn_make_recip(cc_size nd, cc_unit* result, const cc_unit* d) {
 
 	// our quotient
 	// the reciprocal of our modulus, in base 2^64
-	cc_unit* recip = __builtin_alloca(ccn_sizeof_n(n + 1));
-	memset(recip, 0, ccn_sizeof_n(n + 1));
+	// the loop below stores a quotient digit for j = n + 1 (always 0 here), so it needs n + 2 units
+	cc_unit* recip = __builtin_alloca(ccn_sizeof_n(n + 2));
+	memset(recip, 0, ccn_sizeof_n(n + 2));
 
 	// our divisor
 	cc_unit* d_copy = __builtin_alloca(ccn_sizeof_n(n + 1));
@@ -578,7 +579,7 @@ void ccn_make_recip(cc_size nd, cc_unit* result, const cc_unit* d) {
 	// TODO: fix this
 	if (shift > 0) {
 		ccn_shift_left_multi(n + 1, d_copy, d_copy, shift);
-		ccn_shift_left_multi(n + 1, pow, pow, shift);
+		ccn_shift_left_multi(2 * n + 2, pow, pow, shift);
 	}
 	
 	// note that after normalization, the divisor still has the same number of digits as before
