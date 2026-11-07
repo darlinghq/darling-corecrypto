@@ -758,6 +758,31 @@ static bool ccec_verify_component_in_range(cc_size n, const cc_unit* x, const cc
 	return any != 0 && ccn_cmp(n, x, order) < 0;
 }
 
+// ANSI X9.62 and SEC 1 (C.5) encode the signature as a DER Ecdsa-Sig-Value.
+// The decoders accept the BER forms too, so check the DER rules (ITU-T X.690)
+// on what they consumed: a one-octet tag followed by a length in the fewest
+// octets (10.1), and INTEGER contents that are non-empty and in the fewest
+// octets with no sign bit (8.3.1, 8.3.2), since r and s are positive.
+static bool ccec_verify_der_header_is_minimal(const uint8_t* tlv, const uint8_t* content, size_t len) {
+	return (size_t)(content - tlv) == 1 + ccder_sizeof_len(len);
+}
+
+static bool ccec_verify_der_integer_is_canonical(const uint8_t* tlv, const uint8_t* tlv_end) {
+	size_t len = 0;
+	const uint8_t* const content = ccder_decode_tl(CCDER_INTEGER, &len, tlv, tlv_end);
+	if (content == NULL || len == 0 || content + len != tlv_end)
+		return false;
+	if (!ccec_verify_der_header_is_minimal(tlv, content, len))
+		return false;
+	// a set top bit makes the value negative
+	if (content[0] & 0x80)
+		return false;
+	// a leading zero octet is only allowed in front of a set top bit
+	if (len > 1 && content[0] == 0 && !(content[1] & 0x80))
+		return false;
+	return true;
+}
+
 int ccec_verify(ccec_pub_ctx_t key, size_t digest_len, const uint8_t* digest, size_t sig_len, const uint8_t* sig, bool* valid) {
 	const cc_size n = ccec_ctx_n(key);
 	const ccec_const_cp_t curve = ccec_ctx_cp(key);
@@ -813,6 +838,13 @@ int ccec_verify(ccec_pub_ctx_t key, size_t digest_len, const uint8_t* digest, si
 	// The SEQUENCE must hold exactly the two INTEGERs and end exactly at the end of
 	// the signature; anything else is a malformed (or malleated) signature.
 	if (s_end == NULL || s_end != seq_end || seq_end != der_end) {
+		*valid = false;
+		return CCERR_OK;
+	}
+
+	if (!ccec_verify_der_header_is_minimal(sig, seq_start, (size_t)(seq_end - seq_start)) ||
+	    !ccec_verify_der_integer_is_canonical(seq_start, s_start) ||
+	    !ccec_verify_der_integer_is_canonical(s_start, s_end)) {
 		*valid = false;
 		return CCERR_OK;
 	}
