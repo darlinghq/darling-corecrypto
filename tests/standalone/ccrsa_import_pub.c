@@ -42,12 +42,14 @@ static const struct {
 };
 
 /*
- * The caller allocates the context for `cap` units and stores that in ccrsa_ctx_n(key).
+ * The caller allocates the context for `cap_bytes` (in units: ccn_nof_size) and stores
+ * the unit count in ccrsa_ctx_n(key).
  * The import must fail, and must not write outside the block, when the modulus needs more
  * units; and must not count the leading zero octet of a DER INTEGER against the capacity.
  * The context is an exact-size heap block so AddressSanitizer sees any write past its end.
  */
-static int import_with_capacity(const char* what, unsigned cap, unsigned mod_len, int pad, int want_ok) {
+static int import_with_capacity(const char* what, unsigned cap_bytes, unsigned mod_len, int pad, int want_ok) {
+	const cc_size cap = ccn_nof_size(cap_bytes);
 	uint8_t der[2 + 2 + 1 + 80 + 5];
 	unsigned n = 0;
 	unsigned body = (2 + (mod_len + pad)) + 5;
@@ -78,12 +80,12 @@ static int import_with_capacity(const char* what, unsigned cap, unsigned mod_len
 
 static int check_capacity(void) {
 	int f = 0;
-	f += import_with_capacity("33-byte modulus, capacity 2 units", 2, 33, 0, 0);
-	f += import_with_capacity("17-byte modulus, capacity 2 units", 2, 17, 0, 0);
-	f += import_with_capacity("16-byte modulus with 00 pad, capacity 2 units", 2, 16, 1, 1);
-	f += import_with_capacity("16-byte modulus, capacity 2 units", 2, 16, 0, 1);
-	f += import_with_capacity("16-byte modulus, capacity 1 unit", 1, 16, 0, 0);
-	f += import_with_capacity("64-byte modulus, capacity 8 units", 8, 64, 1, 1);
+	f += import_with_capacity("33-byte modulus, capacity 16 bytes", 16, 33, 0, 0);
+	f += import_with_capacity("17-byte modulus, capacity 16 bytes", 16, 17, 0, 0);
+	f += import_with_capacity("16-byte modulus with 00 pad, capacity 16 bytes", 16, 16, 1, 1);
+	f += import_with_capacity("16-byte modulus, capacity 16 bytes", 16, 16, 0, 1);
+	f += import_with_capacity("16-byte modulus, capacity 8 bytes", 8, 16, 0, 0);
+	f += import_with_capacity("64-byte modulus, capacity 64 bytes", 64, 64, 1, 1);
 	return f;
 }
 

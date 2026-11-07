@@ -111,8 +111,9 @@ int main(void) {
 
 	for (size_t i = 0; i < sizeof(vectors) / sizeof(vectors[0]); i++) {
 		ccec_const_cp_t cp = curve(vectors[i].curve);
-		cc_size n = vectors[i].n;
-		cc_unit r[6];
+		/* the vectors are written as 64-bit words; n counts this build's units */
+		cc_size n = ccec_cp_n(cp);
+		cc_unit r[ccn_nof_size(6 * sizeof(unsigned long long))];
 		memset(r, 0, sizeof r);
 
 		if (vectors[i].modulus == 'p') {
@@ -128,7 +129,7 @@ int main(void) {
 			cczp_mod(zp, r, (const cc_unit*)vectors[i].x, NULL);
 		}
 
-		if (memcmp(r, vectors[i].expected, ccn_sizeof_n(n)) != 0) {
+		if (memcmp(r, vectors[i].expected, vectors[i].n * sizeof(unsigned long long)) != 0) {
 			printf("FAIL P-%u mod %c, vector %zu\n", vectors[i].curve, vectors[i].modulus, i);
 			failures++;
 		}
