@@ -58,12 +58,9 @@ int ccec_projective_add_points(ccec_const_cp_t curve, ccec_projective_point_cont
 
 	if (ccn_cmp(n, u1, u2) == 0) {
 		if (ccn_cmp(n, s1, s2) == 0) {
-			#if CCEC_PROJECTIVE_POINT_DEBUG
-				puts("  error = wrong function (use `ccec_projective_double_point`)");
-				puts("}");
-			#endif
-
-			return -1;
+			// the two points are equal, and P + P is 2P (SEC 1 2.2.1); the
+			// chord formula below would divide by zero
+			return ccec_projective_double_point(curve, result, point1);
 		} else {
 			ccec_projective_point_container_init_at_infinity(n, result);
 
