@@ -1,0 +1,33 @@
+Public test vectors used by tests/standalone/ecdsa_vectors.c
+(converted to its input format by scripts/ecdsa-vectors.py).
+The files are unmodified copies of the originals.
+
+cavp/SigVer.rsp
+  NIST Cryptographic Algorithm Validation Program, FIPS 186-4 ECDSA
+  test vectors, "SigVer" (CAVS 11.0).
+  Source: https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/dss/186-4ecdsatestvectors.zip
+          (member 186-4ecdsatestvectors/SigVer.rsp)
+  Archive SHA-256: fe47cc92b4cee418236125c9ffbcd9bb01c8c34e74a4ba195d954bcb72824752
+  File SHA-256:    e9841c3d12e323042751460d0b8ef4bc59c2640105ec7da4852775f80ab10191
+  License: work of the U.S. Government (NIST), not subject to copyright
+  in the United States (17 U.S.C. 105).
+  Only the P-192 ... P-521 sections are used; the binary curves are
+  skipped.
+
+wycheproof/*.json
+  Project Wycheproof, EcdsaVerify test vectors (DER signatures).
+  Source: https://github.com/C2SP/wycheproof, testvectors_v1/,
+          commit d17cc89fa5c8f4f4d378b5385ebf75da5d0926c9
+  License: Apache License 2.0, copy in wycheproof/LICENSE.
+  Copyright the Wycheproof authors (originally Google LLC).
+  SHA-256:
+    9bcb7dd003a60aa94ab133e4348b059ddb4d9c2f74bdd2a1ac948efd31ba935d  ecdsa_secp224r1_sha224_test.json
+    711b1ff8ccdf4932a517ec419a14a86b008430790c87718fd9d40b393960f22d  ecdsa_secp224r1_sha256_test.json
+    ded115bb8f385d42d481f0a11974b4dc2467cfe73ee2c80c7069cf5417b05352  ecdsa_secp224r1_sha512_test.json
+    182db4f3e230f6f9fa9f800d2a614dede30284b8e8438bbfe1171905402e9332  ecdsa_secp256r1_sha256_test.json
+    8e940baad7c6172c58c8f354b10366d307be43a3cb82a5880cb46686c3e8f858  ecdsa_secp256r1_sha512_test.json
+    660c948e5433279ecdf966e8a1386b69ecec618efc1ff00269e85aa9dc84f0a6  ecdsa_secp384r1_sha256_test.json
+    8a5b3ae1760975143414811f13588c24d951d9d8c904195087ba327591dfe9cc  ecdsa_secp384r1_sha384_test.json
+    f44bae32e419fc75c5b5af751cff4e35145cfbcc24944e378d5f30889d310513  ecdsa_secp384r1_sha512_test.json
+    0fa3bb09a2319242253028b53d555fb8ec2081d891271321205cdaeabb3eef3e  ecdsa_secp521r1_sha512_test.json
+    58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd  LICENSE
