@@ -5,7 +5,6 @@ add_compile_options(
 )
 
 add_definitions(
-	-DDEBUG
 	-D_FILE_OFFSET_BITS=64
 )
 

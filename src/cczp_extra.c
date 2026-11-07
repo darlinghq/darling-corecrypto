@@ -21,10 +21,12 @@ void cczp_sub_mod(cc_size n, cc_unit* result, const cc_unit* s, const cc_unit* t
 
 	underflow = ccn_sub(n, mod_tmp, s, t);
 
-	cczp_mod(mod, result, mod_tmp, NULL);
-
+	// mod_tmp is s - t + b^n; adding p and dropping the carry gives s - t + p for
+	// reduced s and t. Reducing first is wrong whenever t - s <= b^n - p.
 	if (underflow)
-		ccn_add(n, result, result, cczp_prime(mod));
+		ccn_add(n, mod_tmp, mod_tmp, cczp_prime(mod));
+
+	cczp_mod(mod, result, mod_tmp, NULL);
 };
 
 void cczp_add_mod(cc_size n, cc_unit* result, const cc_unit* s, const cc_unit* t, cczp_const_t mod) {

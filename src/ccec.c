@@ -206,6 +206,17 @@ static const struct {
 			CC_UNIT_FORMAT_4(FF, FF, FF, FF),
 		// }
 		// reciprocal of modulus p {
+			#if CCN_UNIT_SIZE == 8
+			// floor(b^(2k) / m) with b = 2^CCN_UNIT_BITS and k = units in the modulus, which
+			// is what cczp_mod's Barrett step needs (HAC 14.42); n + 1 units.
+			// k = 4, b = 2^64, full hex = 100000000000000000000000000000000ffffffffffffffffffffffff00000000ffffffff
+			0x00000000ffffffff,
+			0xffffffffffffffff,
+			0x00000000ffffffff,
+			0x0000000000000000,
+			0x0000000100000000,
+			#else
+			// 2^(2 * 224) / m, exact for unit sizes that divide 224 bits
 			// full hex = 0100000000000000000000000000000000ffffffffffffffffffffffff
 			CC_UNIT_FORMAT_8(ff, ff, ff, ff, ff, ff, ff, ff),
 			CC_UNIT_FORMAT_8(00, 00, 00, 00, ff, ff, ff, ff),
@@ -214,6 +225,7 @@ static const struct {
 			// necessary because the reciprocal *must* be `n + 1` units in length
 			#if CCN_UNIT_SIZE >= 5
 				CC_UNIT_FORMAT_1(00),
+			#endif
 			#endif
 		// }
 		// coefficient a {
@@ -252,6 +264,17 @@ static const struct {
 			CC_UNIT_FORMAT_4(ff, ff, ff, ff),
 		// }
 		// reciprocal of order n {
+			#if CCN_UNIT_SIZE == 8
+			// floor(b^(2k) / m) with b = 2^CCN_UNIT_BITS and k = units in the modulus, which
+			// is what cczp_mod's Barrett step needs (HAC 14.42); n + 1 units.
+			// k = 4, b = 2^64, full hex = 10000000000000000000000000000e95d1f470fc1ec22d6baa3a3d5c3d4baa4cf1822bc47
+			0xd4baa4cf1822bc47,
+			0xec22d6baa3a3d5c3,
+			0x0000e95d1f470fc1,
+			0x0000000000000000,
+			0x0000000100000000,
+			#else
+			// 2^(2 * 224) / m, exact for unit sizes that divide 224 bits
 			// full hex = 10000000000000000000000000000e95d1f470fc1ec22d6baa3a3d5c3
 			CC_UNIT_FORMAT_8(ec, 22, d6, ba, a3, a3, d5, c3),
 			CC_UNIT_FORMAT_8(00, 00, e9, 5d, 1f, 47, 0f, c1),
@@ -260,6 +283,7 @@ static const struct {
 			// necessary because the reciprocal *must* be `n + 1` units in length
 			#if CCN_UNIT_SIZE >= 5
 				CC_UNIT_FORMAT_1(00),
+			#endif
 			#endif
 		// }
 		// cofactor h {
@@ -458,18 +482,45 @@ static const struct {
 			CC_UNIT_FORMAT_2(01, ff),
 		// }
 		// reciprocal of modulus p {
-			// full hex = 20000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 01),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_2(02, 00),
-			// necessary because the reciprocal *must* be `n + 1` units in length
-			CC_UNIT_FORMAT_1(00),
+			#if CCN_UNIT_SIZE == 8
+			// floor(b^(2k) / m) with b = 2^CCN_UNIT_BITS and k = units in the modulus, which
+			// is what cczp_mod's Barrett step needs (HAC 14.42); n + 1 units.
+			// k = 9, b = 2^64, full hex = 80000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000
+			0x0000000000000000,
+			0x0000400000000000,
+			0x0000000000000000,
+			0x0000000000000000,
+			0x0000000000000000,
+			0x0000000000000000,
+			0x0000000000000000,
+			0x0000000000000000,
+			0x0000000000000000,
+			0x0080000000000000,
+			#elif CCN_UNIT_SIZE == 4
+			// floor(b^(2k) / m) with b = 2^CCN_UNIT_BITS and k = units in the modulus, which
+			// is what cczp_mod's Barrett step needs (HAC 14.42); n + 1 units.
+			// k = 17, b = 2^32, full hex = 8000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000400000000000
+			0x00000000,
+			0x00004000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00800000,
+			#else
+			#error "no Barrett reciprocal for this unit size"
+			#endif
 		// }
 		// coefficient a {
 			// full hex = 01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc
@@ -532,18 +583,45 @@ static const struct {
 			CC_UNIT_FORMAT_2(01, ff),
 		// }
 		// reciprocal of order n {
-			// full hex = 2000000000000000000000000000000000000000000000000000000000000000005ae79787c40d069948033feb708f65a2fc44a36477663b851449048e16ec79bf7
-			CC_UNIT_FORMAT_8(44, 90, 48, e1, 6e, c7, 9b, f7),
-			CC_UNIT_FORMAT_8(c4, 4a, 36, 47, 76, 63, b8, 51),
-			CC_UNIT_FORMAT_8(80, 33, fe, b7, 08, f6, 5a, 2f),
-			CC_UNIT_FORMAT_8(ae, 79, 78, 7c, 40, d0, 69, 94),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 05),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_8(00, 00, 00, 00, 00, 00, 00, 00),
-			CC_UNIT_FORMAT_2(02, 00),
-			// necessary because the reciprocal *must* be `n + 1` units in length
-			CC_UNIT_FORMAT_1(00),
+			#if CCN_UNIT_SIZE == 8
+			// floor(b^(2k) / m) with b = 2^CCN_UNIT_BITS and k = units in the modulus, which
+			// is what cczp_mod's Barrett step needs (HAC 14.42); n + 1 units.
+			// k = 9, b = 2^64, full hex = 8000000000000000000000000000000000000000000000000000000000000000016b9e5e1f10341a65200cffadc23d968bf1128d91dd98ee14512412385bb1e6fdc408f501c8d1cd2dad1d7f46221c
+			0xcd2dad1d7f46221c,
+			0xe6fdc408f501c8d1,
+			0xee14512412385bb1,
+			0x968bf1128d91dd98,
+			0x1a65200cffadc23d,
+			0x00016b9e5e1f1034,
+			0x0000000000000000,
+			0x0000000000000000,
+			0x0000000000000000,
+			0x0080000000000000,
+			#elif CCN_UNIT_SIZE == 4
+			// floor(b^(2k) / m) with b = 2^CCN_UNIT_BITS and k = units in the modulus, which
+			// is what cczp_mod's Barrett step needs (HAC 14.42); n + 1 units.
+			// k = 17, b = 2^32, full hex = 8000000000000000000000000000000000000000000000000000000000000000016b9e5e1f10341a65200cffadc23d968bf1128d91dd98ee14512412385bb1e6fdc408f501c8d1
+			0xf501c8d1,
+			0xe6fdc408,
+			0x12385bb1,
+			0xee145124,
+			0x8d91dd98,
+			0x968bf112,
+			0xffadc23d,
+			0x1a65200c,
+			0x5e1f1034,
+			0x00016b9e,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00000000,
+			0x00800000,
+			#else
+			#error "no Barrett reciprocal for this unit size"
+			#endif
 		// }
 		// cofactor h {
 			// full hex = 01
@@ -586,8 +664,21 @@ void ccec_compact_export_pub(void* out, ccec_pub_ctx_t key) {
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 };
 
+// X9.63 parts are as wide as the prime in bytes; bytes * 8 would give 528 for
+// P-521, which no curve has. 0 when no supported curve fits.
+static size_t ccec_x963_keysize(size_t in_len, size_t parts) {
+	static const size_t sizes[] = {192, 224, 256, 384, 521};
+
+	if (in_len < 1 || (in_len - 1) % parts != 0)
+		return 0;
+	for (size_t i = 0; i < sizeof(sizes) / sizeof(sizes[0]); ++i)
+		if ((sizes[i] + 7) / 8 == (in_len - 1) / parts)
+			return sizes[i];
+	return 0;
+}
+
 size_t ccec_x963_import_pub_size(size_t in_len) {
-	return ccn_bitsof_size((in_len - 1) / 2);
+	return ccec_x963_keysize(in_len, 2);
 };
 
 int ccec_keysize_is_supported(size_t keysize) {
@@ -605,29 +696,30 @@ int ccec_keysize_is_supported(size_t keysize) {
 };
 
 size_t ccec_x963_import_priv_size(size_t in_len) {
-	return ccn_bitsof_size((in_len - 1) / 3);
+	return ccec_x963_keysize(in_len, 3);
 };
 
 int ccec_import_pub(ccec_const_cp_t cp, size_t in_len, const uint8_t* in, ccec_pub_ctx_t key) {
 	if (in_len < 1) {
-		#if DEBUG
+		#ifdef CORECRYPTO_DIAGNOSTIC_PRINTS
 			printf("%s: empty public key\n", __PRETTY_FUNCTION__);
 		#endif
 		return -1;
 	}
 
 	if (in[0] != 0x04) {
-		#if DEBUG
+		#ifdef CORECRYPTO_DIAGNOSTIC_PRINTS
 			printf("%s: unsupported public key encoding\n", __PRETTY_FUNCTION__);
 		#endif
 		return -1;
 	}
 
 	const cc_size n = cczp_n(cp.zp);
-	const cc_size size = ccn_sizeof_n(n);
+	// X9.63 coordinates are as wide as the prime, not as the limbs holding it
+	const size_t size = ccec_cp_prime_size(cp);
 
 	if (in_len != (2 * size) + 1) {
-		#if DEBUG
+		#ifdef CORECRYPTO_DIAGNOSTIC_PRINTS
 			printf("%s: invalid public key size (expected %zu bytes; got %zu)\n", __PRETTY_FUNCTION__, (2 * size) + 1, in_len);
 		#endif
 		return -1;
@@ -658,6 +750,39 @@ int ccec_verify_composite(ccec_pub_ctx_t key, size_t digest_len, const uint8_t *
 	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
 }
 
+// True iff 0 < x < order. (ccn_is_zero is not usable here: ccn_n never returns 0.)
+static bool ccec_verify_component_in_range(cc_size n, const cc_unit* x, const cc_unit* order) {
+	cc_unit any = 0;
+	for (cc_size i = 0; i < n; ++i)
+		any |= x[i];
+	return any != 0 && ccn_cmp(n, x, order) < 0;
+}
+
+// ANSI X9.62 and SEC 1 (C.5) encode the signature as a DER Ecdsa-Sig-Value.
+// The decoders accept the BER forms too, so check the DER rules (ITU-T X.690)
+// on what they consumed: a one-octet tag followed by a length in the fewest
+// octets (10.1), and INTEGER contents that are non-empty and in the fewest
+// octets with no sign bit (8.3.1, 8.3.2), since r and s are positive.
+static bool ccec_verify_der_header_is_minimal(const uint8_t* tlv, const uint8_t* content, size_t len) {
+	return (size_t)(content - tlv) == 1 + ccder_sizeof_len(len);
+}
+
+static bool ccec_verify_der_integer_is_canonical(const uint8_t* tlv, const uint8_t* tlv_end) {
+	size_t len = 0;
+	const uint8_t* const content = ccder_decode_tl(CCDER_INTEGER, &len, tlv, tlv_end);
+	if (content == NULL || len == 0 || content + len != tlv_end)
+		return false;
+	if (!ccec_verify_der_header_is_minimal(tlv, content, len))
+		return false;
+	// a set top bit makes the value negative
+	if (content[0] & 0x80)
+		return false;
+	// a leading zero octet is only allowed in front of a set top bit
+	if (len > 1 && content[0] == 0 && !(content[1] & 0x80))
+		return false;
+	return true;
+}
+
 int ccec_verify(ccec_pub_ctx_t key, size_t digest_len, const uint8_t* digest, size_t sig_len, const uint8_t* sig, bool* valid) {
 	const cc_size n = ccec_ctx_n(key);
 	const ccec_const_cp_t curve = ccec_ctx_cp(key);
@@ -675,7 +800,24 @@ int ccec_verify(ccec_pub_ctx_t key, size_t digest_len, const uint8_t* digest, si
 	cc_unit e[n];
 	memset(e, 0, sizeof e);
 
-	ccn_read_uint(n, e, (log_2_n >= 8 * digest_len) ? (log_2_n + 7) / 8 : digest_len, digest);
+	{
+		// ANSI X9.62: e is the leftmost bitlen(order) bits of the digest
+		size_t use_len = digest_len;
+		if (8 * use_len > log_2_n)
+			use_len = (log_2_n + 7) / 8;
+
+		ccn_read_uint(n, e, use_len, digest);
+
+		if (8 * use_len > log_2_n) {
+			// excess_bits is below 8, so a single pass over the units suffices
+			const size_t excess_bits = 8 * use_len - log_2_n;
+			for (cc_size i = 0; i < n; ++i) {
+				e[i] >>= excess_bits;
+				if (i + 1 < n)
+					e[i] |= e[i + 1] << (CCN_UNIT_BITS - excess_bits);
+			}
+		}
+	}
 
 	cc_unit r[n];
 	cc_unit s[n];
@@ -685,13 +827,42 @@ int ccec_verify(ccec_pub_ctx_t key, size_t digest_len, const uint8_t* digest, si
 	const uint8_t* const der_end = sig + sig_len;
 	const uint8_t* seq_end = NULL;
 	const uint8_t* const seq_start = ccder_decode_sequence_tl(&seq_end, sig, der_end);
-	const uint8_t* const s_start = ccder_decode_uint(n, r, seq_start, der_end);
-	ccder_decode_uint(n, s, s_start, der_end);
+	if (seq_start == NULL) {
+		*valid = false;
+		return CCERR_OK;
+	}
+	// Read the two components inside the SEQUENCE body, and reject a signature whose
+	// DER does not decode rather than verifying with the zeroed r and s above.
+	const uint8_t* const s_start = ccder_decode_uint(n, r, seq_start, seq_end);
+	const uint8_t* const s_end = (s_start == NULL) ? NULL : ccder_decode_uint(n, s, s_start, seq_end);
+	// The SEQUENCE must hold exactly the two INTEGERs and end exactly at the end of
+	// the signature; anything else is a malformed (or malleated) signature.
+	if (s_end == NULL || s_end != seq_end || seq_end != der_end) {
+		*valid = false;
+		return CCERR_OK;
+	}
+
+	if (!ccec_verify_der_header_is_minimal(sig, seq_start, (size_t)(seq_end - seq_start)) ||
+	    !ccec_verify_der_integer_is_canonical(seq_start, s_start) ||
+	    !ccec_verify_der_integer_is_canonical(s_start, s_end)) {
+		*valid = false;
+		return CCERR_OK;
+	}
+
+	// FIPS 186-4 6.4 / X9.62 7.4.1: both components must lie in [1, n-1]. r and s
+	// are public here, so these branches do not depend on secrets.
+	if (!ccec_verify_component_in_range(n, r, order) || !ccec_verify_component_in_range(n, s, order)) {
+		*valid = false;
+		return CCERR_OK;
+	}
 
 	cc_unit s_inv[n];
 	memset(s_inv, 0, sizeof s_inv);
 
-	ccn_modular_multiplicative_inverse(n, s_inv, s, order);
+	if (ccn_modular_multiplicative_inverse(n, s_inv, s, order) != 0) {
+		*valid = false;
+		return CCERR_OK;
+	}
 
 	// double-sized so that we can use `cczp_mod` on it later
 	cc_unit rx[2 * n];
@@ -835,7 +1006,16 @@ int ccec_compute_key(ccec_full_ctx_t private_key, ccec_pub_ctx_t public_key,
 }
 
 int ccec_generate_key(ccec_const_cp_t cp, struct ccrng_state* rng, ccec_full_ctx_t key) {
+	// The curve is recorded first so the context stays consistent when generation is refused.
 	ccec_ctx_cp(key) = cp;
+
+	// P-521 point arithmetic is wrong with every unit size, and P-224 arithmetic is wrong with 64-bit
+	// units (the 32-bit constants were already right): generated public keys are not on the curve and
+	// valid signatures do not verify. Refuse instead of returning an invalid key, and remove the check
+	// once the curve code passes known-answer tests.
+	const size_t prime_bits = ccec_cp_prime_bitlen(cp);
+	if (prime_bits == 521 || (prime_bits == 224 && CCN_UNIT_SIZE == 8))
+		return -1;
 
 	const cc_size n = ccec_cp_n(cp);
 	const cc_size size = ccn_sizeof_n(n);
@@ -859,21 +1039,7 @@ int ccec_generate_key(ccec_const_cp_t cp, struct ccrng_state* rng, ccec_full_ctx
 	ccn_zero(n, k);
 
 	{
-	// temporary fixed value for k, for debugging
-	#if DEBUG
-		// k = 0xf6e190614fcd4621dc96afb3da3ea63db115f6d946db03400eb2ea7f960db6bb
-		cc_unit tmp[ccn_nof(256)] = {
-			CC_UNIT_FORMAT_8(0e, b2, ea, 7f, 96, 0d, b6, bb),
-			CC_UNIT_FORMAT_8(b1, 15, f6, d9, 46, db, 03, 40),
-			CC_UNIT_FORMAT_8(dc, 96, af, b3, da, 3e, a6, 3d),
-			CC_UNIT_FORMAT_8(f6, e1, 90, 61, 4f, cd, 46, 21),
-		};
-		memcpy(k, tmp, sizeof tmp);
-	#else
 		cc_unit tmp_k[2 * n];
-		memset(tmp_k, 0, sizeof tmp_k);
-
-		ccn_random_bits(ccec_cp_prime_bitlen(cp), tmp_k, rng);
 
 		uint8_t tmp_zp_bytes[cczp_size(size)];
 		memset(tmp_zp_bytes, 0, sizeof tmp_zp_bytes);
@@ -884,9 +1050,34 @@ int ccec_generate_key(ccec_const_cp_t cp, struct ccrng_state* rng, ccec_full_ctx
 		memcpy(CCZP_PRIME(tmp_zp), ccec_cp_o(cp), ccn_sizeof_n((2 * n) + 1));
 		tmp_zp.zp->mod_prime = cczp_mod;
 
-		cczp_mod(tmp_zp, k, tmp_k, NULL);
-	#endif
-	};
+		// A private scalar must lie in [1, order - 1]. Reduction can yield 0 (with
+		// negligible probability), so draw again rather than return the point at infinity.
+		bool have_k = false;
+		for (unsigned attempt = 0; attempt < 16 && !have_k; ++attempt) {
+			memset(tmp_k, 0, sizeof tmp_k);
+
+			// 64 bits more than the order, so the reduction below is uniform up to 2^-64 (FIPS 186-4 B.4.1)
+			if (ccn_random_bits(ccn_bitlen(n, ccec_cp_o(cp)) + 64, tmp_k, rng) != 0) {
+				cc_clear(sizeof tmp_k, tmp_k);
+				return -1;
+			}
+
+			cczp_mod(tmp_zp, k, tmp_k, NULL);
+
+			cc_unit any = 0;
+			for (cc_size i = 0; i < n; ++i)
+				any |= k[i];
+			have_k = any != 0;
+		}
+
+		// the unreduced draw determines the private scalar
+		cc_clear(sizeof tmp_k, tmp_k);
+
+		if (!have_k) {
+			ccn_zero(n, k);
+			return -1;
+		}
+	}
 
 	cc_unit tmpz[n];
 	memset(tmpz, 0, sizeof tmpz);
