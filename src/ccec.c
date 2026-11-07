@@ -1025,8 +1025,10 @@ int ccec_generate_key(ccec_const_cp_t cp, struct ccrng_state* rng, ccec_full_ctx
 			memset(tmp_k, 0, sizeof tmp_k);
 
 			// 64 bits more than the order, so the reduction below is uniform up to 2^-64 (FIPS 186-4 B.4.1)
-			if (ccn_random_bits(ccn_bitlen(n, ccec_cp_o(cp)) + 64, tmp_k, rng) != 0)
+			if (ccn_random_bits(ccn_bitlen(n, ccec_cp_o(cp)) + 64, tmp_k, rng) != 0) {
+				cc_clear(sizeof tmp_k, tmp_k);
 				return -1;
+			}
 
 			cczp_mod(tmp_zp, k, tmp_k, NULL);
 
@@ -1035,6 +1037,9 @@ int ccec_generate_key(ccec_const_cp_t cp, struct ccrng_state* rng, ccec_full_ctx
 				any |= k[i];
 			have_k = any != 0;
 		}
+
+		// the unreduced draw determines the private scalar
+		cc_clear(sizeof tmp_k, tmp_k);
 
 		if (!have_k) {
 			ccn_zero(n, k);
