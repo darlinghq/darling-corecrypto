@@ -63,7 +63,7 @@ _cccast_ecb_decrypt_mode
 _cccast_ecb_encrypt_mode
 _cccast_ofb_crypt_mode
 #_cccbc_one_shot
-#_ccchacha20
+_ccchacha20
 #_ccchacha20_final
 #_ccchacha20_init
 #_ccchacha20_reset
@@ -72,12 +72,12 @@ _cccast_ofb_crypt_mode
 #_ccchacha20_update
 #_ccchacha20poly1305_aad
 #_ccchacha20poly1305_decrypt
-#_ccchacha20poly1305_decrypt_oneshot
+_ccchacha20poly1305_decrypt_oneshot
 #_ccchacha20poly1305_encrypt
-#_ccchacha20poly1305_encrypt_oneshot
+_ccchacha20poly1305_encrypt_oneshot
 #_ccchacha20poly1305_finalize
 #_ccchacha20poly1305_incnonce
-#_ccchacha20poly1305_info
+_ccchacha20poly1305_info
 #_ccchacha20poly1305_init
 #_ccchacha20poly1305_reset
 #_ccchacha20poly1305_setnonce
@@ -91,6 +91,7 @@ _ccckg_sizeof_commitment
 _ccckg_sizeof_ctx
 _ccckg_sizeof_opening
 _ccckg_sizeof_share
+_cccmac_cbc
 _cccmac_final_generate
 #_cccmac_final_verify
 _cccmac_init
@@ -217,6 +218,7 @@ _ccdigest_oid_lookup
 _ccdigest_update
 #_ccdrbg_factory_nistctr
 #_ccdrbg_factory_nisthmac
+_ccec_blind
 _ccec_compact_export
 _ccec_compact_export_pub
 _ccec_compact_generate_key
@@ -244,6 +246,7 @@ _ccec_diversify_priv_twin
 #_ccec_diversify_pub
 _ccec_diversify_pub_twin
 _ccec_export_pub
+_ccec_generate_blinding_keys
 _ccec_generate_key
 _ccec_generate_key_deterministic
 _ccec_generate_key_fips
@@ -274,6 +277,7 @@ _ccec_rfc6637_wrap_sha512_kek_aes256
 _ccec_sign
 _ccec_sign_composite
 _ccec_signature_r_s_size
+_ccec_unblind
 _ccec_validate_pub
 _ccec_verify
 _ccec_verify_composite
@@ -308,8 +312,8 @@ _ccgcm_one_shot
 _ccgcm_one_shot_legacy
 _ccgcm_set_iv_legacy
 _cchkdf
-#_cchkdf_expand
-#_cchkdf_extract
+_cchkdf_expand
+_cchkdf_extract
 _cchmac
 _cchmac_final
 _cchmac_init
@@ -592,6 +596,7 @@ _cczp_prime
 #_csss_shamir_share_bag_can_recover_secret
 #_fipspost_post
 #_fipspost_trace_vtable
+_cch2c
 _cch2c_p256_sha256_sswu_ro_info
 _cch2c_p384_sha512_sswu_ro_info
 _cch2c_p521_sha512_sswu_ro_info
