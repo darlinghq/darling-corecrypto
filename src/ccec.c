@@ -985,7 +985,112 @@ int ccec_sign_composite(ccec_full_ctx_t key, size_t digest_len, const uint8_t *d
 
 int ccec_sign(ccec_full_ctx_t key, size_t digest_len, const uint8_t *digest,
               size_t *sig_len, uint8_t *sig, struct ccrng_state *rng) {
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	const ccec_const_cp_t cp = ccec_ctx_cp(key);
+	const cc_size n = ccec_cp_n(cp);
+	const cc_unit *const order = ccec_cp_o(cp);
+	const size_t log_2_n = ccn_bitlen(n, order);
+
+	uint8_t zp_bytes[cczp_size(ccn_sizeof_n(n))];
+	memset(zp_bytes, 0, sizeof zp_bytes);
+	cczp_t zp = (cczp_t)(struct cczp *)zp_bytes;
+	CCZP_N(zp) = n;
+	memcpy(CCZP_PRIME(zp), order, ccn_sizeof_n((2 * n) + 1));
+	zp.zp->mod_prime = cczp_mod;
+
+	cc_unit e_2n[2 * n];
+	memset(e_2n, 0, sizeof e_2n);
+	{
+		size_t use_len = digest_len;
+		if (8 * use_len > log_2_n)
+			use_len = (log_2_n + 7) / 8;
+		ccn_read_uint(n, e_2n, use_len, digest);
+		if (8 * use_len > log_2_n) {
+			const size_t excess_bits = 8 * use_len - log_2_n;
+			for (cc_size i = 0; i < n; ++i) {
+				e_2n[i] >>= excess_bits;
+				if (i + 1 < n)
+					e_2n[i] |= e_2n[i + 1] << (CCN_UNIT_BITS - excess_bits);
+			}
+		}
+	}
+	cc_unit e[n];
+	cczp_mod(zp, e, e_2n, NULL);
+
+	cc_unit k[n], k_inv[n], r[n], s[n];
+	cc_unit rx[n], ry[n], rz[n], rx_2n[2 * n];
+	cc_unit tmp_k[2 * n], prod[2 * n], rd[n], sum_2n[2 * n];
+	bool ok = false;
+
+	for (unsigned attempt = 0; attempt < 32 && !ok; ++attempt) {
+		memset(tmp_k, 0, sizeof tmp_k);
+		if (ccn_random_bits(log_2_n + 64, tmp_k, rng) != 0)
+			break;
+		cczp_mod(zp, k, tmp_k, NULL);
+		if (ccn_is_zero(n, k))
+			continue;
+
+		cc_unit tmpz[n];
+		memset(tmpz, 0, sizeof tmpz);
+		tmpz[0] = 1;
+		ccec_projective_point_container_t R = { .n = n, .x = rx, .y = ry, .z = rz };
+		ccec_projective_multiply(cp, R, (ccec_const_projective_point_container_t) {
+			.n = n, .x = ccec_cp_x(cp), .y = ccec_cp_y(cp), .z = tmpz,
+		}, n, k);
+		ccec_affine_point_container_from_projective_point(cp, (ccec_affine_point_container_t) {
+			.n = n, .x = rx, .y = ry,
+		}, ccec_projective_point_container_constify(R));
+
+		memset(rx_2n, 0, sizeof rx_2n);
+		ccn_set(n, rx_2n, rx);
+		cczp_mod(zp, r, rx_2n, NULL);
+		if (ccn_is_zero(n, r))
+			continue;
+
+		if (ccn_modular_multiplicative_inverse(n, k_inv, k, order) != 0)
+			continue;
+
+		ccn_mul(n, prod, r, ccec_ctx_k(key));
+		cczp_mod(zp, rd, prod, NULL);
+
+		memset(sum_2n, 0, sizeof sum_2n);
+		sum_2n[n] = ccn_add(n, sum_2n, e, rd);
+		cc_unit e_plus_rd[n];
+		cczp_mod(zp, e_plus_rd, sum_2n, NULL);
+
+		ccn_mul(n, prod, k_inv, e_plus_rd);
+		cczp_mod(zp, s, prod, NULL);
+		if (ccn_is_zero(n, s))
+			continue;
+
+		ok = true;
+	}
+
+	cc_clear(sizeof k, k);
+	cc_clear(sizeof k_inv, k_inv);
+	cc_clear(sizeof tmp_k, tmp_k);
+	cc_clear(sizeof prod, prod);
+	cc_clear(sizeof rd, rd);
+	cc_clear(sizeof sum_2n, sum_2n);
+
+	if (!ok)
+		return -1;
+
+	uint8_t *der_end = sig + *sig_len;
+	uint8_t *p = ccder_encode_integer(n, s, sig, der_end);
+	if (!p)
+		return -1;
+	p = ccder_encode_integer(n, r, sig, p);
+	if (!p)
+		return -1;
+	p = ccder_encode_constructed_tl(CCDER_CONSTRUCTED_SEQUENCE, der_end, sig, p);
+	if (!p)
+		return -1;
+
+	size_t out_len = (size_t)(der_end - p);
+	if (p > sig)
+		memmove(sig, p, out_len);
+	*sig_len = out_len;
+	return 0;
 }
 
 int ccec_der_import_priv_keytype(size_t len, const uint8_t * data, ccoid_t *oid, size_t *n) {
