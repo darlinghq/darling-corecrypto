@@ -16,6 +16,34 @@
 #include <stdint.h>
 #include <corecrypto/cc_error.h>
 
+/* Declarations shared with the Apple corecrypto public headers.  Apple
+ * enables clang pointer checks in these; we only need the plain-C spelling. */
+#ifndef CC_BEGIN_DECLS
+#ifdef __cplusplus
+#define CC_BEGIN_DECLS extern "C" {
+#define CC_END_DECLS }
+#else
+#define CC_BEGIN_DECLS
+#define CC_END_DECLS
+#endif
+#endif
+
+#ifndef CC_PTRCHECK_CAPABLE_HEADER
+#define CC_PTRCHECK_CAPABLE_HEADER()
+#endif
+
+#ifndef cc_sized_by
+#define cc_sized_by(_n_)
+#endif
+
+#ifndef cc_memset
+#define cc_memset memset
+#endif
+
+#ifndef cc_memcpy
+#define cc_memcpy memcpy
+#endif
+
 // Stub
 #define CC_MAX_ALIGNMENT 0
 #define cc_pad_align(size) size
