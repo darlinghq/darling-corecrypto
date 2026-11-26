@@ -30,3 +30,14 @@ else()
 endif()
 
 add_dependencies(test_corecrypto generate_test_data)
+
+# Post-quantum KATs and negative tests (FIPS 203/204, Kyber, X-Wing).
+if (DARLING)
+	add_darling_executable(test_pqc_vectors standalone/pqc_vectors.c)
+	install(TARGETS test_pqc_vectors DESTINATION libexec/darling/usr/libexec)
+else()
+	add_executable(test_pqc_vectors standalone/pqc_vectors.c)
+	target_link_libraries(test_pqc_vectors PRIVATE corecrypto)
+endif()
+
+add_test(NAME pqc_vectors COMMAND test_pqc_vectors)
