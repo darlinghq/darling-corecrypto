@@ -12,6 +12,16 @@ include_directories(
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+# CC0 post-quantum implementations vendored under src/pqc.  Each algorithm has
+# its own directory because several of them use unprefixed parameter macros.
+file(GLOB pqc_algorithm_dirs LIST_DIRECTORIES true ${CMAKE_CURRENT_SOURCE_DIR}/src/pqc/*)
+foreach(pqc_dir ${pqc_algorithm_dirs})
+	if(IS_DIRECTORY ${pqc_dir})
+		include_directories(${pqc_dir})
+	endif()
+endforeach()
+file(GLOB_RECURSE pqc_sources ${CMAKE_CURRENT_SOURCE_DIR}/src/pqc/*.c)
+
 set(corecrypto_sources
 		src/cc.c
 		src/ccdigest.c
@@ -69,6 +79,13 @@ set(corecrypto_sources
 		src/ccofb.c
 		src/ccxts.c
 		src/ccckg.c
+		src/cckem.c
+		src/ccmlkem.c
+		src/cckyber.c
+		src/ccmldsa.c
+		src/ccxwing.c
+		src/cc_fault_canary.c
+		${pqc_sources}
 )
 
 if (DARLING)
