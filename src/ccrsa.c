@@ -7,8 +7,14 @@
 
 // Reference used is https://tools.ietf.org/html/rfc8017
 
-int ccrsa_import_pub(ccrsa_pub_ctx_t key, size_t inlen, const uint8_t *der) {
-	const uint8_t* der_end = der + inlen;
+static int decode_rsa_pub_components(
+	const uint8_t *der, const uint8_t *der_end,
+	const uint8_t **out_mod_body, size_t *out_mod_len,
+	const uint8_t **out_exp_body, size_t *out_exp_len
+) {
+	if (!der || !der_end || der >= der_end)
+		return CCERR_PARAMETER;
+
 	const uint8_t* body_end = NULL;
 	const uint8_t* body = ccder_decode_sequence_tl(&body_end, der, der_end);
 	if (body == NULL)
@@ -22,7 +28,7 @@ int ccrsa_import_pub(ccrsa_pub_ctx_t key, size_t inlen, const uint8_t *der) {
 
 	size_t exp_length = 0;
 	const uint8_t* exp_body = ccder_decode_tl(CCDER_INTEGER, &exp_length, mod_body_end, body_end);
-	if (exp_body == NULL || exp_length == 0)
+	if (exp_body == NULL || exp_length == 0 || exp_body + exp_length != body_end)
 		return CCERR_PARAMETER;
 
 	// A DER INTEGER carries a leading zero octet when the top bit is set; it does not count
@@ -37,6 +43,25 @@ int ccrsa_import_pub(ccrsa_pub_ctx_t key, size_t inlen, const uint8_t *der) {
 		exp_body++;
 		exp_length--;
 	}
+	if (exp_length == 0)
+		return CCERR_PARAMETER;
+
+	*out_mod_body = mod_body;
+	*out_mod_len = mod_length;
+	*out_exp_body = exp_body;
+	*out_exp_len = exp_length;
+	return CCERR_OK;
+}
+
+int ccrsa_import_pub(ccrsa_pub_ctx_t key, size_t inlen, const uint8_t *der) {
+	if (!der)
+		return CCERR_PARAMETER;
+	const uint8_t* mod_body = NULL;
+	const uint8_t* exp_body = NULL;
+	size_t mod_length = 0;
+	size_t exp_length = 0;
+	if (decode_rsa_pub_components(der, der + inlen, &mod_body, &mod_length, &exp_body, &exp_length) != CCERR_OK)
+		return CCERR_PARAMETER;
 
 	cc_size n = ccn_nof_size(mod_length);
 
@@ -62,7 +87,13 @@ int ccrsa_import_pub(ccrsa_pub_ctx_t key, size_t inlen, const uint8_t *der) {
 
 cc_size ccder_decode_rsa_pub_n(const uint8_t *der, const uint8_t *der_end)
 {
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	const uint8_t* mod_body = NULL;
+	const uint8_t* exp_body = NULL;
+	size_t mod_length = 0;
+	size_t exp_length = 0;
+	if (decode_rsa_pub_components(der, der_end, &mod_body, &mod_length, &exp_body, &exp_length) != CCERR_OK)
+		return 0;
+	return ccn_nof_size(mod_length);
 }
 
 int ccrsa_pub_crypt(ccrsa_pub_ctx_t key, cc_unit* out, const cc_unit* in) {
