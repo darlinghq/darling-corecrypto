@@ -42,6 +42,10 @@ from so that the provenance is reviewable in one place.
 - **X-Wing vectors:** Appendix C of
   [draft-connolly-cfrg-xwing-kem-07](https://datatracker.ietf.org/doc/html/draft-connolly-cfrg-xwing-kem-07).
   The source and draft section are identified in `xwing_vectors.h`.
+- **FIPS 202 SHAKE/SHA3 vectors:** NIST FIPS 202 examples, with additional
+  expected outputs calculated independently using Python 3's standard-library
+  `hashlib`. No third-party source code was copied; the expected byte strings
+  are recorded in `tests/standalone/fips202_vectors.h`.
 
 ## Standards
 

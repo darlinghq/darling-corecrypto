@@ -41,3 +41,21 @@ else()
 endif()
 
 add_test(NAME pqc_vectors COMMAND test_pqc_vectors)
+
+# FIPS 202 SHAKE/XOF KATs for the backend shared by all post-quantum schemes.
+# Compile fips202.c into the test binary so it also works when the dylib uses
+# an exported-symbols list (the low-level SHAKE entry points stay internal).
+set(FIPS202_TEST_SOURCES
+	standalone/fips202_vectors.c
+	${CMAKE_CURRENT_SOURCE_DIR}/../src/pqc/common/fips202.c
+)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../src/pqc/common)
+
+if (DARLING)
+	add_darling_executable(test_fips202 ${FIPS202_TEST_SOURCES})
+	install(TARGETS test_fips202 DESTINATION libexec/darling/usr/libexec)
+else()
+	add_executable(test_fips202 ${FIPS202_TEST_SOURCES})
+endif()
+
+add_test(NAME fips202_vectors COMMAND test_fips202)
