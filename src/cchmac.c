@@ -5,20 +5,20 @@
 void cchmac_init(const struct ccdigest_info *di, cchmac_ctx_t ctx,
                  size_t key_len, const void *key) {
 
+	// RFC 2104 section 2: a key longer than the block is replaced by its hash,
+	// and the key is then zero-padded to the block size
 	if (key_len > di->block_size)
 	{
-		// "keys longer than blocksize are shortened"
 		ccdigest(di, key_len, key, cchmac_data(di, ctx));
-		key_len = di->block_size;
+		key_len = di->output_size;
 	}
 	else
 	{
 		memcpy(cchmac_data(di, ctx), key, key_len);
-
-		// "keys shorter than blocksize are zero-padded"
-		if (key_len < di->block_size)
-			memset(cchmac_data(di, ctx) + key_len, 0, di->block_size - key_len);
 	}
+
+	if (key_len < di->block_size)
+		memset(cchmac_data(di, ctx) + key_len, 0, di->block_size - key_len);
 
 	for (int i = 0; i < di->block_size; i++)
 		cchmac_data(di, ctx)[i] ^= 0x5c; // XOR opad

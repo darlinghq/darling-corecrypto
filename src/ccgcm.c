@@ -1,9 +1,7 @@
 #include <corecrypto/private/cc128.h>
 #include <corecrypto/ccmode_factory.h>
-#include <corecrypto/private/ccstubs.h>
 #include <corecrypto/ccmode.h>
 #include <string.h>
-#include <stdio.h>
 
 #define CCGCM_MODE_INITIALIZE 0
 #define CCGCM_MODE_IV         1
@@ -432,14 +430,40 @@ int ccgcm_inc_iv(const struct ccmode_gcm* mode, ccgcm_ctx* _ctx, void* iv) {
 	return 0;
 };
 
+// Identical to ccgcm_set_iv except that the IV may be empty. With an empty IV,
+// the pre-counter block J0 is GHASH of the all-zero length block (NIST SP 800-38D
+// section 7.1), which ccmode_gcm_set_iv and ccgcm_process_iv already compute.
 int ccgcm_set_iv_legacy(const struct ccmode_gcm *mode, ccgcm_ctx *ctx, size_t iv_nbytes, const void *iv) {
-	printf("DARLING CRYPTO STUB: %s\n", __PRETTY_FUNCTION__);
+	return mode->set_iv(ctx, iv_nbytes, iv);
 };
 
+static int gcm_one_shot(const struct ccmode_gcm* mode, size_t key_len, const void* key, size_t iv_len, const void* iv, size_t adata_len, const void* adata, size_t nbytes, const void* in, void* out, size_t tag_len, void* tag) {
+	int status;
+	ccgcm_ctx_decl(mode->size, ctx);
+
+	if ((status = mode->init(mode, ctx, key_len, key)) != CCERR_OK)
+		goto out;
+	if ((status = mode->set_iv(ctx, iv_len, iv)) != CCERR_OK)
+		goto out;
+	if ((status = mode->gmac(ctx, adata_len, adata)) != CCERR_OK)
+		goto out;
+	if ((status = mode->gcm(ctx, nbytes, in, out)) != CCERR_OK)
+		goto out;
+	// on decryption, this compares the computed tag with the one in tag
+	status = mode->finalize(ctx, tag_len, tag);
+
+out:
+	ccgcm_ctx_clear(mode->size, ctx);
+	return status;
+}
+
 int ccgcm_one_shot(const struct ccmode_gcm* mode, size_t key_len, const void* key, size_t iv_len, const void* iv, size_t adata_len, const void* adata, size_t nbytes, const void* in, void* out, size_t tag_len, void* tag) {
-	CC_STUB_ERR();
+	// the IV must not be empty; only the legacy variant allows that
+	if (iv_len == 0)
+		return CCERR_PARAMETER;
+	return gcm_one_shot(mode, key_len, key, iv_len, iv, adata_len, adata, nbytes, in, out, tag_len, tag);
 };
 
 int ccgcm_one_shot_legacy(const struct ccmode_gcm* mode, size_t key_len, const void* key, size_t iv_len, const void* iv, size_t adata_len, const void* adata, size_t nbytes, const void* in, void* out, size_t tag_len, void* tag) {
-	CC_STUB_ERR();
+	return gcm_one_shot(mode, key_len, key, iv_len, iv, adata_len, adata, nbytes, in, out, tag_len, tag);
 };
