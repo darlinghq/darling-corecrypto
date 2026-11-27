@@ -53,6 +53,7 @@ set(corecrypto_sources
 		src/ccec_projective_point.c
 		src/ccec_points.c
 		src/ccn_extra.c
+		src/dbn.c
 		src/cczp_extra.c
 		src/ccgcm.c
 		src/cch2c.c

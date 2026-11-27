@@ -1,4 +1,5 @@
 #include <corecrypto/cczp.h>
+#include <corecrypto/private/dbn.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -128,94 +129,14 @@ void cczp_mod(cczp_const_t zp, cc_unit* result, const cc_unit* operand, cc_ws_t 
 }
 
 /*
- * r = (m^e) mod CCZP_PRIME(zp)
- *
- * Implementation guide: https://en.wikipedia.org/wiki/Modular_exponentiation#Right-to-left_binary_method
- *
- * zp:	ZP data structure
- * r:	Result pointer, cc_unit array size CCZP_N(zp)
- * m:	Message, also size CCZP_N(zp)
- * e:	Exponent, also size CCZP_N(zp)
+ * r = m^e mod CCZP_PRIME(zp); r, m and e are cczp_n(zp) units. r may alias m.
+ * Constant time in the values of m and e (see dbn_modexp). The exponent is
+ * cut to its significant units first, so short public exponents (RSA's 65537)
+ * stay fast; only that unit count shows in the timing.
  */
 void cczp_power(cczp_const_t zp, cc_unit* r, const cc_unit* m, const cc_unit* e) {
-	/*
-		function modular_pow(base, exponent, modulus) is
-			if modulus = 1 then
-				return 0
-			Assert :: (modulus - 1) * (modulus - 1) does not overflow base
-			result := 1
-			base := base mod modulus
-			while exponent > 0 do
-				if (exponent mod 2 == 1) then
-					result := (result * base) mod modulus
-				exponent := exponent >> 1
-				base := (base * base) mod modulus
-			return result
-	*/
-	cc_unit* base = NULL;
-	cc_ws ws = { .start = NULL, .end = NULL };
-	cc_unit* e_copy = NULL;
-	cc_unit* intermediate = NULL;
-
-	cc_size full_n = cczp_n(zp);
-	cc_size full_size = ccn_sizeof_n(full_n);
-
-	memset(r, 0, full_size);
-
-	const cc_unit* mod = cczp_prime(zp);
-	cc_size mod_n = ccn_n(full_n, mod);
-
-	// if modulus == 1, return 0
-	//
-	// we *should* copy 1 into a ccn and use
-	// ccn_cmp, but this is faster and ccn's are guaranteed
-	// to be little-endian so it works well
-	if (mod_n == 1 && mod[0] == 1)
-		return;
-
-	// allocated: n * 2
-	// max ever used: n
-	base = __builtin_alloca(full_size * 2);
-	memset(base, 0, full_size * 2);
-	memcpy(base, m, full_size);
-
-	// result = 1
-	r[0] = 1;
-
-	// create a workspace
-	// use a workspace size 2n+1 because ws.end is non-inclusive end pointer
-	ws.start = __builtin_alloca(ccn_sizeof_n(full_n * 2 + 1));
-	ws.end = ws.start + ccn_sizeof_n(full_n * 2);
-
-	// base = base mod modulus
-	cczp_mod_prime(zp)(zp, base, base, &ws);
-
-	e_copy = __builtin_alloca(full_size);
-	memcpy(e_copy, e, full_size);
-
-	intermediate = __builtin_alloca(full_size * 2);
-	memset(intermediate, 0, full_size * 2);
-
-	// while exponent > 0
-	while (ccn_n(full_n, e_copy) > 1 || e_copy[0] > 0) {
-		// if (exponent mod 2 == 1)
-		//
-		// `e mod 2` == `e & 1`
-		if (ccn_bit(e_copy, 0)) {
-			// result = (result * base) mod modulus
-			memset(intermediate, 0, full_size * 2);
-			ccn_mul(full_n, intermediate, r, base);
-			cczp_mod_prime(zp)(zp, r, intermediate, &ws);
-		}
-
-		// exponent = exponent >> 1
-		ccn_shift_right(full_n, e_copy, e_copy, 1);
-
-		// base = (base * base) mod modulus
-		memset(intermediate, 0, full_size * 2);
-		ccn_mul(full_n, intermediate, base, base);
-		cczp_mod_prime(zp)(zp, base, intermediate, &ws);
-	}
+	const cc_size n = cczp_n(zp);
+	dbn_modexp(n, r, m, ccn_n(n, e), e, cczp_prime(zp));
 }
 
 CC_CONST cc_size cczp_n(cczp_const_t zp)
